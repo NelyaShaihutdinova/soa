@@ -2,22 +2,20 @@ openapi: 3.0.0
 info:
   title: Vehicle Management API
   version: 1.0.0
-  description: API для управления коллекцией транспортных средств с дополнительными операциями
+  description: API для управления коллекцией транспортных средств
   contact:
     name: API Support
-    email: help-please@mail.ru
+    email: example@mail.ru
 
 servers:
   - url: http://localhost:8080/api
-    description: Development server
+    description: Development service
 
 tags:
   - name: vehicles
     description: Операции с транспортными средствами
   - name: statistics
     description: Статистические операции
-  - name: shop
-    description: Дополнительные операции магазина
 
 paths:
   /vehicles:
@@ -122,18 +120,22 @@ paths:
                     type: integer
         '400':
           description: Неверные параметры запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           description: Требуется аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '403':
           description: Доступ запрещен
-        '422':
-          description: Ошибка валидации параметров запроса
-        '429':
-          description: Слишком много запросов
-        '500':
-          description: Внутренняя ошибка сервера
-        '503':
-          description: Сервис временно недоступен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
     post:
       tags: [vehicles]
@@ -163,20 +165,28 @@ paths:
                 $ref: '#/components/schemas/Vehicle'
         '400':
           description: Неверные данные транспортного средства
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           description: Требуется аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '403':
           description: Доступ запрещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '409':
-          description: Конфликт данных (дублирование и т.д.)
-        '422':
-          description: Ошибка валидации данных
-        '429':
-          description: Слишком много запросов
-        '500':
-          description: Внутренняя ошибка сервера
-        '503':
-          description: Сервис временно недоступен
+          description: Конфликт данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /vehicles/{id}:
     get:
@@ -200,20 +210,30 @@ paths:
                 $ref: '#/components/schemas/Vehicle'
         '400':
           description: Неверный ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           description: Требуется аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '403':
           description: Доступ запрещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Транспортное средство не найдено
-        '429':
-          description: Слишком много запросов
-        '500':
-          description: Внутренняя ошибка сервера
-        '503':
-          description: Сервис временно недоступен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
-    put:
+    patch:
       tags: [vehicles]
       summary: Обновить транспортное средство
       description: Обновляет данные транспортного средства по указанному ID
@@ -245,27 +265,39 @@ paths:
                 $ref: '#/components/schemas/Vehicle'
         '400':
           description: Неверные данные для обновления
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           description: Требуется аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '403':
           description: Доступ запрещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Транспортное средство не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '409':
           description: Конфликт данных при обновлении
-        '422':
-          description: Ошибка валидации данных
-        '429':
-          description: Слишком много запросов
-        '500':
-          description: Внутренняя ошибка сервера
-        '503':
-          description: Сервис временно недоступен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
     delete:
       tags: [vehicles]
       summary: Удалить транспортное средство
-      description: Удаляет транспортное средство по указанному ID
+      description: Удaляет транспортное средство по указанному ID
       parameters:
         - name: id
           in: path
@@ -279,20 +311,28 @@ paths:
           description: Транспортное средство успешно удалено
         '400':
           description: Неверный ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           description: Требуется аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '403':
           description: Доступ запрещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Транспортное средство не найдено
-        '409':
-          description: Конфликт при удалении
-        '429':
-          description: Слишком много запросов
-        '500':
-          description: Внутренняя ошибка сервера
-        '503':
-          description: Сервис временно недоступен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /vehicles/stats/average-engine-power:
     get:
@@ -313,18 +353,22 @@ paths:
                     description: Средняя мощность двигателя
         '401':
           description: Требуется аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '403':
           description: Доступ запрещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Нет данных для расчета
-        '422':
-          description: Невозможно вычислить среднее значение
-        '429':
-          description: Слишком много запросов
-        '500':
-          description: Внутренняя ошибка сервера
-        '503':
-          description: Сервис временно недоступен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /vehicles/stats/count-by-wheels/{wheels}:
     get:
@@ -352,20 +396,28 @@ paths:
                     description: Количество транспортных средств
         '400':
           description: Неверное количество колес
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           description: Требуется аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '403':
           description: Доступ запрещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
-          description: Нет транспортных средств с указанным количеством колес
-        '422':
-          description: Ошибка обработки запроса
-        '429':
-          description: Слишком много запросов
-        '500':
-          description: Внутренняя ошибка сервера
-        '503':
-          description: Сервис временно недоступен
+          description: Данные не найдены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /vehicles/search/name-starts-with/{prefix}:
     get:
@@ -391,112 +443,28 @@ paths:
                   $ref: '#/components/schemas/Vehicle'
         '400':
           description: Неверная подстрока
-        '401':
-          description: Требуется аутентификация
-        '403':
-          description: Доступ запрещен
-        '404':
-          description: Объекты не найдены
-        '422':
-          description: Ошибка обработки поискового запроса
-        '429':
-          description: Слишком много запросов
-        '500':
-          description: Внутренняя ошибка сервера
-        '503':
-          description: Сервис временно недоступен
-
-  /shop/search/by-engine-power/{from}/{to}:
-    get:
-      tags: [shop]
-      summary: Поиск по диапазону мощности двигателя
-      description: Найти все транспортные средства с мощностью двигателя в заданном диапазоне
-      parameters:
-        - name: from
-          in: path
-          required: true
-          description: Минимальная мощность двигателя
-          schema:
-            type: integer
-            minimum: 1
-        - name: to
-          in: path
-          required: true
-          description: Максимальная мощность двигателя
-          schema:
-            type: integer
-            minimum: 1
-      responses:
-        '200':
-          description: Успешный поиск
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Vehicle'
-        '400':
-          description: Неверный диапазон мощности (from > to)
+                $ref: '#/components/schemas/Error'
         '401':
           description: Требуется аутентификация
-        '403':
-          description: Доступ запрещен
-        '404':
-          description: Объекты не найдены
-        '422':
-          description: Недопустимый диапазон значений
-        '429':
-          description: Слишком много запросов
-        '500':
-          description: Внутренняя ошибка сервера
-        '503':
-          description: Сервис временно недоступен
-
-  /shop/add-wheels/{vehicle-id}/{number-of-wheels}:
-    patch:
-      tags: [shop]
-      summary: Добавить колеса транспортному средству
-      description: Добавить транспортному средству с заданным id указанное число колёс
-      parameters:
-        - name: vehicle-id
-          in: path
-          required: true
-          description: ID транспортного средства
-          schema:
-            type: integer
-            minimum: 1
-        - name: number-of-wheels
-          in: path
-          required: true
-          description: Количество колес для добавления
-          schema:
-            type: integer
-            minimum: 1
-      responses:
-        '200':
-          description: Колеса успешно добавлены
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Vehicle'
-        '400':
-          description: Неверные параметры (отрицательное количество колес и т.д.)
-        '401':
-          description: Требуется аутентификация
+                $ref: '#/components/schemas/Error'
         '403':
           description: Доступ запрещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
-          description: Транспортное средство не найдено
-        '409':
-          description: Конфликт при обновлении (превышение максимального количества колес)
-        '422':
-          description: Невозможно добавить указанное количество колес
-        '429':
-          description: Слишком много запросов
-        '500':
-          description: Внутренняя ошибка сервера
-        '503':
-          description: Сервис временно недоступен
+          description: Объекты не найдены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
   schemas:
@@ -624,21 +592,69 @@ components:
       enum: [KEROSENE, ELECTRICITY, DIESEL, ALCOHOL, NUCLEAR]
       description: Тип топлива
 
+    Error:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Время возникновения ошибки
+        status:
+          type: integer
+          description: HTTP статус код
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        path:
+          type: string
+          description: Путь запроса
+
   responses:
     BadRequest:
       description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     Unauthorized:
       description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     Forbidden:
       description: Доступ запрещен
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     NotFound:
       description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     TooManyRequests:
       description: Слишком много запросов
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     ServerError:
       description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     ServiceUnavailable:
-      description: Сервис временно недоступen
+      description: Сервис временно недоступен
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
 
   parameters:
     PageNumber:
