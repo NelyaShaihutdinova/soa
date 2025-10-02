@@ -124,14 +124,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '401':
-          description: Требуется аутентификация
+        '413':
+          description: Слишком большой контент
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '403':
-          description: Доступ запрещен
+        '415':
+          description: Неподдерживаемый медиа тип
           content:
             application/json:
               schema:
@@ -169,14 +169,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '401':
-          description: Требуется аутентификация
+        '413':
+          description: Слишком большой контент
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '403':
-          description: Доступ запрещен
+        '415':
+          description: Неподдерживаемый медиа тип
           content:
             application/json:
               schema:
@@ -214,14 +214,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '401':
-          description: Требуется аутентификация
+        '413':
+          description: Слишком большой контент
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '403':
-          description: Доступ запрещен
+        '415':
+          description: Неподдерживаемый медиа тип
           content:
             application/json:
               schema:
@@ -269,14 +269,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '401':
-          description: Требуется аутентификация
+        '413':
+          description: Слишком большой контент
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '403':
-          description: Доступ запрещен
+        '415':
+          description: Неподдерживаемый медиа тип
           content:
             application/json:
               schema:
@@ -315,14 +315,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '401':
-          description: Требуется аутентификация
+        '413':
+          description: Слишком большой контент
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '403':
-          description: Доступ запрещен
+        '415':
+          description: Неподдерживаемый медиа тип
           content:
             application/json:
               schema:
@@ -351,14 +351,14 @@ paths:
                     type: number
                     format: float
                     description: Средняя мощность двигателя
-        '401':
-          description: Требуется аутентификация
+        '413':
+          description: Слишком большой контент
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '403':
-          description: Доступ запрещен
+        '415':
+          description: Неподдерживаемый медиа тип
           content:
             application/json:
               schema:
@@ -400,14 +400,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '401':
-          description: Требуется аутентификация
+        '413':
+          description: Слишком большой контент
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '403':
-          description: Доступ запрещен
+        '415':
+          description: Неподдерживаемый медиа тип
           content:
             application/json:
               schema:
@@ -447,14 +447,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '401':
-          description: Требуется аутентификация
+        '413':
+          description: Слишком большой контент
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '403':
-          description: Доступ запрещен
+        '415':
+          description: Неподдерживаемый медиа тип
           content:
             application/json:
               schema:
@@ -619,14 +619,14 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    Unauthorized:
-      description: Требуется аутентификация
+    TooLarge:
+      description: Слишком большой контент
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    Forbidden:
-      description: Доступ запрещен
+    UnsupportedMediaType:
+      description: Неподдерживаемый медиа тип
       content:
         application/json:
           schema:
