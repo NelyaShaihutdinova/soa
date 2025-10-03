@@ -19,6 +19,7 @@
 
   <modules>
     <module>first_wildfly</module>
+    <module>second_payara</module>
   </modules>
 
   <properties>
