@@ -1,5 +1,6 @@
 package ru.ifmo.api;
 
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,5 +26,14 @@ public class ApiHandler {
                 .message(e.toString())
                 .error(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase())
                 .status(500);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ru.ifmo.external.model.Error> onError(ConstraintViolationException e) {
+        return ResponseEntity.status(400)
+                .body(new ru.ifmo.external.model.Error()
+                        .timestamp(OffsetDateTime.now())
+                        .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                        .status(400));
     }
 }

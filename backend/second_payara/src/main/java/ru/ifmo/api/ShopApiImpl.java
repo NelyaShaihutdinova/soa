@@ -16,12 +16,13 @@ public class ShopApiImpl implements ShopApi {
 
     @Override
     public ResponseEntity<Vehicle> shopAddWheelsVehicleIdNumberOfWheelsPatch(Integer vehicleId, Integer numberOfWheels) {
-        Vehicle vehicle = shopService.addVehicleWheels(vehicleId, numberOfWheels);
+        var vehicle = shopService.addVehicleWheels(vehicleId, numberOfWheels);
         return ResponseEntity.ok(vehicle);
     }
 
     @Override
     public ResponseEntity<List<Vehicle>> shopSearchByEnginePowerFromToGet(Integer from, Integer to) {
-        return ShopApi.super.shopSearchByEnginePowerFromToGet(from, to);
+        var vehicles = shopService.findByEnginePower(from, to);
+        return ResponseEntity.ok(vehicles);
     }
 }

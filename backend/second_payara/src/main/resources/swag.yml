@@ -8,7 +8,7 @@ info:
     email: example@mail.ru
 
 servers:
-  - url: http://localhost:8080/shop
+  - url: http://localhost:8081/second_payara-0.0.1-SNAPSHOT
     description: Shop service
 
 tags:
@@ -16,8 +16,8 @@ tags:
     description: Дополнительные операции магазина
   - name: reports
     description: Отчеты и аналитика
-  - name: dealerships
-    description: Управление автосалонами
+  - name: vehicles
+    description: Операции с транспортными средствами
 
 paths:
   /shop/search/by-engine-power/{from}/{to}:
@@ -231,32 +231,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /dealerships/nearest/with-vehicle:
-    post:
-      tags: [dealerships]
-      summary: Поиск ближайшего автосалона с интересующим транспортом
-      description: Найти ближайший автосалон, где есть доступный транспорт с заданными характеристиками
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DealershipSearchRequest'
+  /vehicles/search/by-coordinates:
+    get:
+      tags: [vehicles]
+      summary: Поиск транспорта по координатам
+      description: Найти транспортные средства по заданным координатам
+      parameters:
+        - name: x
+          in: query
+          required: true
+          description: Координата X
+          schema:
+            type: integer
+            format: int64
+        - name: y
+          in: query
+          required: true
+          description: Координата Y
+          schema:
+            type: integer
       responses:
         '200':
-          description: Автосалон найден
+          description: Успешный поиск
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DealershipSearchResult'
-        '202':
-          description: Поиск запущен в фоновом режиме
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SearchStatus'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vehicle'
         '400':
-          description: Неверные параметры (отрицательное количество колес и т.д.)
+          description: Неверные параметры координат
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Транспортные средства не найдены
           content:
             application/json:
               schema:
@@ -273,14 +283,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '404':
-          description: Транспортное средство не найдено
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Конфликт при обновлении
+        '422':
+          description: Необрабатываемые данные
           content:
             application/json:
               schema:
@@ -520,146 +524,6 @@ components:
         downloadUrl:
           type: string
           format: uri
-
-    DealershipSearchRequest:
-      type: object
-      required:
-        - currentLocation
-        - vehicleCriteria
-      properties:
-        currentLocation:
-          $ref: '#/components/schemas/Coordinates'
-        vehicleCriteria:
-          $ref: '#/components/schemas/VehicleSearchCriteria'
-        maxDistance:
-          type: integer
-          description: Максимальное расстояние в км
-          minimum: 1
-          maximum: 500
-          default: 100
-        includeTestDrive:
-          type: boolean
-          default: false
-        budgetLimit:
-          type: number
-          format: double
-          description: Лимит бюджета
-        preferredBrands:
-          type: array
-          items:
-            type: string
-
-    VehicleSearchCriteria:
-      type: object
-      properties:
-        fuelType:
-          $ref: '#/components/schemas/FuelType'
-        minEnginePower:
-          type: integer
-          minimum: 1
-        maxEnginePower:
-          type: integer
-          minimum: 1
-        minCapacity:
-          type: number
-          format: float
-          minimum: 0
-          exclusiveMinimum: true
-        maxCapacity:
-          type: number
-          format: float
-          minimum: 0
-          exclusiveMinimum: true
-        minWheels:
-          type: integer
-          minimum: 1
-        maxWheels:
-          type: integer
-          minimum: 1
-        vehicleType:
-          type: string
-          enum: [CAR, TRUCK, MOTORCYCLE, BUS, SPECIAL]
-
-    DealershipSearchResult:
-      type: object
-      properties:
-        dealership:
-          $ref: '#/components/schemas/Dealership'
-        distance:
-          type: number
-          format: double
-          description: Расстояние в км
-        availableVehicles:
-          type: array
-          items:
-            $ref: '#/components/schemas/AvailableVehicle'
-        estimatedTravelTime:
-          type: string
-          description: Примерное время пути
-        contactInfo:
-          $ref: '#/components/schemas/ContactInfo'
-        rating:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 5
-
-    Dealership:
-      type: object
-      properties:
-        id:
-          type: integer
-        name:
-          type: string
-        location:
-          $ref: '#/components/schemas/Coordinates'
-        address:
-          type: string
-        workingHours:
-          type: string
-        phone:
-          type: string
-
-    AvailableVehicle:
-      type: object
-      properties:
-        vehicle:
-          $ref: '#/components/schemas/Vehicle'
-        price:
-          type: number
-          format: double
-        availableCount:
-          type: integer
-        discount:
-          type: number
-          format: double
-        deliveryTime:
-          type: string
-          description: Время доставки при отсутствии
-
-    ContactInfo:
-      type: object
-      properties:
-        phone:
-          type: string
-        email:
-          type: string
-        website:
-          type: string
-          format: uri
-
-    SearchStatus:
-      type: object
-      properties:
-        searchId:
-          type: string
-        status:
-          type: string
-          enum: [SEARCHING, COMPLETED, FAILED]
-        resultsCount:
-          type: integer
-        estimatedTimeRemaining:
-          type: string
 
   responses:
     BadRequest:
