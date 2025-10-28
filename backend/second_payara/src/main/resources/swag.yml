@@ -8,7 +8,7 @@ info:
     email: example@mail.ru
 
 servers:
-  - url: http://localhost:8081/second_payara-0.0.1-SNAPSHOT
+  - url: https://localhost:8453/second_payara-0.0.1-SNAPSHOT
     description: Shop service
 
 tags:

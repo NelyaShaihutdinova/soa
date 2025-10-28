@@ -48,7 +48,7 @@ public class ReportsApiImpl implements ReportsApi {
         }
 
         if (Boolean.TRUE.equals(includeDetails)) {
-            List<MaintenanceRecord> records = createMaintenanceRecords(vehicleId);
+            List<MaintenanceRecord> records = createMaintenanceRecords();
             report.setMaintenanceRecords(records);
         }
 
@@ -60,7 +60,7 @@ public class ReportsApiImpl implements ReportsApi {
         return ResponseEntity.ok(report);
     }
 
-    private List<MaintenanceRecord> createMaintenanceRecords(Integer vehicleId) {
+    private List<MaintenanceRecord> createMaintenanceRecords() {
         MaintenanceRecord record1 = new MaintenanceRecord();
         record1.setId(1);
         record1.setDate(OffsetDateTime.now().minusMonths(3));

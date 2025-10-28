@@ -1,8 +1,18 @@
-server:
-  port: 8081
-
 spring:
   jmx:
     enabled: false
   autoconfigure:
     exclude: org.springframework.boot.autoconfigure.http.HttpClientAutoConfiguration
+
+server:
+  port: 8453
+  ssl:
+    enabled: true
+    key-store-type: PKCS12
+    key-store: classpath:keystore/baeldung.p12
+    key-store-password: changeit
+    key-alias: baeldung
+
+trust:
+  store: classpath:keystore/baeldung.p12
+  store.password: changeit

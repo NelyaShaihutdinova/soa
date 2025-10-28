@@ -12,6 +12,19 @@ spring:
     properties:
       format_sql: true
 
+server:
+  port: 8452
+  ssl:
+    enabled: true
+    key-store-type: PKCS12
+    key-store: classpath:keystore/baeldung.p12
+    key-store-password: changeit
+    key-alias: baeldung
+
+trust:
+  store: classpath:keystore/baeldung.p12
+  store.password: changeit
+
 logging:
   level:
     root: info
