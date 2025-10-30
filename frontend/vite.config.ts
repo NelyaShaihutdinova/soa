@@ -7,13 +7,9 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
-    https: {
-      key: './localhost-key.pem',
-      cert: './localhost.pem',
-    },
     proxy: {
       '/api': {
-        target: 'https://localhost:3001',
+        target: 'https://ubuntu22:8453',
         changeOrigin: true,
         secure: false,
       },
