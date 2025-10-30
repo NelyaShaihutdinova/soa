@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type {Vehicle, VehicleCreate, VehicleUpdate, PaginatedResponse, VehicleFilters} from './types.ts';
 
-const API_BASE_URL = 'https://localhost:3001/api';
+const API_BASE_URL = 'https://188.227.32.90:8452/first_wildfly-0.0.1-SNAPSHOT';
 
 const api = axios.create({
     baseURL: API_BASE_URL,
