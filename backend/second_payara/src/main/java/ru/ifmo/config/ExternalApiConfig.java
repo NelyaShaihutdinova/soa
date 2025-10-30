@@ -48,36 +48,13 @@ public class ExternalApiConfig {
 
     @Bean
     public RestTemplate restTemplate() throws Exception {
-//        var sslContext = new SSLContextBuilder()
-//                .loadTrustMaterial(trustStore.getURL(), trustStorePassword.toCharArray())
-//                .build();
-//
-//        var sslConFactory = new SSLConnectionSocketFactory(sslContext);
-//
-//        var cm = PoolingHttpClientConnectionManagerBuilder.create()
-//                .setSSLSocketFactory(sslConFactory)
-//                .build();
-//
-//        var httpClient = HttpClients.custom()
-//                .setConnectionManager(cm)
-//                .build();
-//
-//        var requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
-//
-//        RestTemplate restTemplate = new RestTemplate(requestFactory);
-//
-//        DefaultUriBuilderFactory uriBuilderFactory = new DefaultUriBuilderFactory();
-//        uriBuilderFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.VALUES_ONLY);
-//        restTemplate.setUriTemplateHandler(uriBuilderFactory);
-//
-//        return restTemplate;
         SSLContext sslContext = new SSLContextBuilder()
                 .loadTrustMaterial(null, (chain, authType) -> true) // Принимаем все сертификаты
                 .build();
 
         SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(
                 sslContext,
-                NoopHostnameVerifier.INSTANCE // Отключаем проверку hostname
+                NoopHostnameVerifier.INSTANCE
         );
 
         var cm = PoolingHttpClientConnectionManagerBuilder.create()

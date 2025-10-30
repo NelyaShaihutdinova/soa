@@ -1,0 +1,2 @@
+set configs.config.server-config.network-config.protocols.protocol.http-listener-1.security-enabled=${ENV=security-enabled}
+set configs.config.server-config.network-config.protocols.protocol.http-listener-1.http.http2-timeout-seconds=300
