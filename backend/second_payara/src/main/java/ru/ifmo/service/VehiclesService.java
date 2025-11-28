@@ -27,12 +27,12 @@ public class VehiclesService {
 
     private final VehiclesApi vehiclesApi;
 
-    public List<Vehicle> searchByCoordinates(Long x, Integer y) {
+    public List<Vehicle> searchByCoordinates(Long x, Integer y, Long maxDistance) {
         var firstPage = getVehiclesPage(1);
         var totalPages = firstPage.getTotalPages();
         return getAllVehicles(totalPages, firstPage)
                 .stream()
-                .filter(vehicle -> filterByCoordinates(vehicle.getCoordinates(), x, y))
+                .filter(vehicle -> filterByCoordinates(vehicle.getCoordinates(), x, y, maxDistance))
                 .collect(toList());
     }
 
@@ -46,8 +46,13 @@ public class VehiclesService {
                 .orElse(emptyList());
     }
 
-    private boolean filterByCoordinates(@NotNull @Valid Coordinates coordinates, Long x, Integer y) {
-        return coordinates.getX().equals(x) && coordinates.getY().equals(y);
+    private boolean filterByCoordinates(@NotNull @Valid Coordinates coordinates, Long x, Integer y, Long maxDistance) {
+        long dx = coordinates.getX() - x;
+        long dy = coordinates.getY().longValue() - y;
+        long distanceSquared = dx * dx + dy * dy;
+        long maxDistanceSquared = maxDistance * maxDistance;
+
+        return distanceSquared <= maxDistanceSquared;
     }
 
     private List<Vehicle> mergeVehiclePages(Integer totalPages, VehiclesGet200Response firstPage) {

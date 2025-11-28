@@ -1,11 +1,18 @@
 import axios from 'axios';
 import type {Vehicle, VehicleCreate, VehicleUpdate, PaginatedResponse, VehicleFilters} from './types.ts';
 
-const API_BASE_URL_SERVICE_1 = '/first_wildfly-0.0.1-SNAPSHOT';
-const API_BASE_URL_SERVICE_2 = '/second_payara-0.0.1-SNAPSHOT';
+const API_BASE_URL_SERVICE_1 = '/app';
+const API_BASE_URL_SERVICE_2 = '';
 
-const api = axios.create({
-    baseURL: 'https://ubuntu22:8453',
+const api1 = axios.create({
+    baseURL: 'https://ubuntu22:8443',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
+
+const api2 = axios.create({
+    baseURL: 'https://ubuntu22:8443',
     headers: {
         'Content-Type': 'application/json',
     },
@@ -21,37 +28,37 @@ const vehiclesApi = {
             }
         });
 
-        return api.get<PaginatedResponse<Vehicle>>(`${API_BASE_URL_SERVICE_1}/vehicles?${params}`);
+        return api1.get<PaginatedResponse<Vehicle>>(`${API_BASE_URL_SERVICE_1}/vehicles?${params}`);
     },
 
     getVehicleById: (id: number) => {
-        return api.get<Vehicle>(`${API_BASE_URL_SERVICE_1}/vehicles/${id}`);
+        return api1.get<Vehicle>(`${API_BASE_URL_SERVICE_1}/vehicles/${id}`);
     },
 
     createVehicle: (vehicle: VehicleCreate) => {
-        return api.post<Vehicle>(`${API_BASE_URL_SERVICE_1}/vehicles`, vehicle);
+        return api1.post<Vehicle>(`${API_BASE_URL_SERVICE_1}/vehicles`, vehicle);
     },
 
     updateVehicle: (id: number, updates: VehicleUpdate) => {
-        return api.patch<Vehicle>(`${API_BASE_URL_SERVICE_1}/vehicles/${id}`, updates);
+        return api1.post<Vehicle>(`${API_BASE_URL_SERVICE_1}/vehicles/${id}`, updates);
     },
 
     deleteVehicle: (id: number) => {
-        return api.delete(`${API_BASE_URL_SERVICE_1}/vehicles/${id}`);
+        return api1.delete(`${API_BASE_URL_SERVICE_1}/vehicles/${id}`);
     },
 
     getAverageEnginePower: () => {
-        return api.get<{ averageEnginePower: number }>(`${API_BASE_URL_SERVICE_1}/vehicles/stats/average-engine-power`);
+        return api1.get<{ averageEnginePower: number }>(`${API_BASE_URL_SERVICE_1}/vehicles/stats/average-engine-power`);
     },
 
     getCountByWheels: (wheels: number) => {
-        return api.get<{ count: number }>(`${API_BASE_URL_SERVICE_1}/vehicles/stats/count-by-wheels/${wheels}`);
+        return api1.get<{ count: number }>(`${API_BASE_URL_SERVICE_1}/vehicles/stats/count-by-wheels/${wheels}`);
     },
 };
 
 export const reportsApi = {
     getMaintenanceReport: (vehicleId: number, format: string = 'json', includeDetails: boolean = true, includeCosts: boolean = true) => {
-        return api.get(`${API_BASE_URL_SERVICE_2}/reports/maintenance/${vehicleId}`, {
+        return api2.get(`${API_BASE_URL_SERVICE_2}/reports/maintenance/${vehicleId}`, {
             params: {format, includeDetails, includeCosts}
         });
     },
@@ -59,17 +66,17 @@ export const reportsApi = {
 
 export const dealershipsApi = {
     findNearestDealership: (searchRequest: any) => {
-        return api.post(`${API_BASE_URL_SERVICE_2}/dealerships/nearest/with-vehicle`, searchRequest);
+        return api2.get(`${API_BASE_URL_SERVICE_2}/vehicles/search/by-coordinates?x=${searchRequest.x}&y=${searchRequest.y}&max_distance=${searchRequest.maxDistance}`);
     },
 };
 
 export const shopApi = {
     searchByEnginePower: (from: number, to: number) => {
-        return api.get(`${API_BASE_URL_SERVICE_2}/shop/search/by-engine-power/${from}/${to}`);
+        return api2.get(`${API_BASE_URL_SERVICE_2}/shop/search/by-engine-power/${from}/${to}`);
     },
 
     addWheels: (vehicleId: number, numberOfWheels: number) => {
-        return api.patch(`${API_BASE_URL_SERVICE_2}/shop/add-wheels/${vehicleId}/${numberOfWheels}`);
+        return api2.patch(`${API_BASE_URL_SERVICE_2}/shop/add-wheels/${vehicleId}/${numberOfWheels}`);
     },
 };
 

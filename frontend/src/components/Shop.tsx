@@ -28,15 +28,30 @@ const Shop: React.FC = () => {
     const handleAddWheels = async (values: { vehicleId: number; numberOfWheels: number }) => {
         try {
             const response = await shopApi.addWheels(values.vehicleId, values.numberOfWheels);
-            notification.success({message: 'Wheels added successfully'});
+            notification.success({ message: 'Wheels added successfully' });
 
-            setVehicles(prev => prev.map(v =>
-                v.id === values.vehicleId ? response.data : v
-            ));
+            setVehicles((prev) =>
+                prev.map((v) => (v.id === values.vehicleId ? response.data : v))
+            );
 
             wheelsForm.resetFields();
-        } catch (error) {
-            notification.error({message: 'Failed to add wheels'});
+        } catch (error: any) {
+            const status = error.response?.status;
+            const errorMessage = error.response?.data?.message?.toLowerCase() || '';
+
+            if (
+                status === 500 ||
+                status === 404 ||
+                status === 400 ||
+                errorMessage.includes('vehicle') ||
+                errorMessage.includes('id') ||
+                errorMessage.includes('not found') ||
+                errorMessage.includes('invalid')
+            ) {
+                alert('Vehicle ID is incorrect' );
+            } else {
+                alert('Failed to add wheels' );
+            }
         }
     };
 

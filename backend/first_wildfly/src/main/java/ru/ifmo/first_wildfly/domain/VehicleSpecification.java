@@ -11,8 +11,13 @@ import java.math.BigDecimal;
 public class VehicleSpecification {
 
     public static Specification<VehicleEntity> withName(String name) {
-        return (root, query, criteriaBuilder) ->
-                name == null ? null : criteriaBuilder.equal(root.get("name"), name);
+        return (root, query, criteriaBuilder) -> {
+            if (name == null || name.isBlank()) {
+                return null;
+            }
+            String pattern = "%" + name.toLowerCase() + "%";
+            return criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), pattern);
+        };
     }
 
     public static Specification<VehicleEntity> withEnginePowerBetween(Integer min, Integer max) {

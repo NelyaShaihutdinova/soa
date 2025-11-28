@@ -1,6 +1,16 @@
 spring:
   application:
-    name: first_wildfly
+    name: app
+  cloud:
+    consul:
+      host: consul
+      port: 8500
+      discovery:
+        enabled: true
+        instance-id: ${spring.application.name}:${random.uuid}
+        prefer-ip-address: true
+        health-check-path: /actuator/health
+        health-check-interval: 15s
   datasource:
     url: jdbc:h2:mem:mydb
     username: sa
@@ -12,8 +22,17 @@ spring:
     properties:
       format_sql: true
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
 server:
-  port: 8452
+  port: ${PORT:8452}
   ssl:
     enabled: true
     key-store-type: PKCS12

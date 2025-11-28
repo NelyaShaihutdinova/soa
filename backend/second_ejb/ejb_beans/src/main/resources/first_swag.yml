@@ -233,7 +233,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-    post:
+    patch:
       tags: [vehicles]
       summary: Обновить транспортное средство
       description: Обновляет данные транспортного средства по указанному ID

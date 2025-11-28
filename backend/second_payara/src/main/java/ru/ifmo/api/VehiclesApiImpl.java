@@ -17,7 +17,7 @@ public class VehiclesApiImpl implements VehiclesApi {
     private final VehiclesService vehiclesService;
 
     @Override
-    public ResponseEntity<List<Vehicle>> vehiclesSearchByCoordinatesGet(Long x, Integer y) {
-        return ok(vehiclesService.searchByCoordinates(x, y));
+    public ResponseEntity<List<Vehicle>> vehiclesSearchByCoordinatesGet(Long x, Integer y, Long maxDistance) {
+        return ok(vehiclesService.searchByCoordinates(x, y, maxDistance));
     }
 }

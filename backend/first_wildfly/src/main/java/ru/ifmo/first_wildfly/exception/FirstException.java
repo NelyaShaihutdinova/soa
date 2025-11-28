@@ -1,7 +1,9 @@
 package ru.ifmo.first_wildfly.exception;
 
+import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
+@Getter
 public class FirstException extends RuntimeException {
 
     private final HttpStatus code;
@@ -11,7 +13,4 @@ public class FirstException extends RuntimeException {
         this.code = code;
     }
 
-    public HttpStatus getCode() {
-        return code;
-    }
 }

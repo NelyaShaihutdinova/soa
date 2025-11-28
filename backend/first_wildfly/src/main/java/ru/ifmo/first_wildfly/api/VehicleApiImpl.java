@@ -89,7 +89,7 @@ public class VehicleApiImpl implements VehiclesApi {
     }
 
     @Override
-    public ResponseEntity<Vehicle> vehiclesIdPatch(Integer id, VehicleUpdate vehicleUpdate) {
+    public ResponseEntity<Vehicle> vehiclesIdPost(Integer id, VehicleUpdate vehicleUpdate) {
         return ok(vehicleService.update(id, vehicleUpdate));
     }
 

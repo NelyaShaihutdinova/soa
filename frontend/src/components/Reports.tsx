@@ -30,8 +30,23 @@ const Reports: React.FC = () => {
             const response = await reportsApi.getMaintenanceReport(values.vehicleId);
             setReport(response.data);
             message.success('Report generated successfully');
-        } catch (error) {
-            message.error('Failed to generate report');
+        } catch (error: any) {
+                      const status = error.response?.status;
+                      const errorMessage = error.response?.data?.message?.toLowerCase() || '';
+
+                      if (
+                          status === 500 ||
+                          status === 404 ||
+                          status === 400 ||
+                          errorMessage.includes('vehicle') ||
+                          errorMessage.includes('id') ||
+                          errorMessage.includes('not found') ||
+                          errorMessage.includes('invalid')
+                      ) {
+                          alert('Vehicle ID is incorrect' );
+                      } else {
+                          alert('Failed to add wheels' );
+                      }
         } finally {
             setLoading(false);
         }
