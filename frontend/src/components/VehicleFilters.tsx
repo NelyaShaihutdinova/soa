@@ -22,7 +22,15 @@ const VehicleFilters: React.FC = () => {
             page: 1,
             size: 20,
             sort: 'id',
-            order: 'asc'
+            order: 'asc',
+            name: undefined,
+            fuelType: undefined,
+            minEnginePower: undefined,
+            maxEnginePower: undefined,
+            minWheels: undefined,
+            maxWheels: undefined,
+            minCapacity: undefined,
+            maxCapacity: undefined,
         }));
     };
 

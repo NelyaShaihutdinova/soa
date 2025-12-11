@@ -1,0 +1,595 @@
+openapi: 3.0.0
+info:
+  title: Vehicle Management API
+  version: 1.0.0
+  description: Shop API
+  contact:
+    name: API Support
+    email: example@mail.ru
+
+servers:
+  - url: https://localhost:8453/second_payara-0.0.1-SNAPSHOT
+    description: Shop service
+
+tags:
+  - name: shop
+    description: Дополнительные операции магазина
+  - name: reports
+    description: Отчеты и аналитика
+  - name: vehicles
+    description: Операции с транспортными средствами
+
+paths:
+  /shop/search/by-engine-power/{from}/{to}:
+    get:
+      tags: [shop]
+      summary: Поиск по диапазону мощности двигателя
+      description: Найти все транспортные средства с мощностью двигателя в заданном диапазоне
+      parameters:
+        - name: from
+          in: path
+          required: true
+          description: Минимальная мощность двигателя
+          schema:
+            type: integer
+            minimum: 1
+        - name: to
+          in: path
+          required: true
+          description: Максимальная мощность двигателя
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Успешный поиск
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vehicle'
+        '400':
+          description: Неверный диапазон мощности (from > to)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Слишком большой контент
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '415':
+          description: Неподдерживаемый медиа тип
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Объекты не найдены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Необрабатываемые данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /shop/add-wheels/{vehicle-id}/{number-of-wheels}:
+    patch:
+      tags: [shop]
+      summary: Добавить колеса транспортному средству
+      description: Добавить транспортному средству с заданным id указанное число колёс
+      parameters:
+        - name: vehicle-id
+          in: path
+          required: true
+          description: ID транспортного средства
+          schema:
+            type: integer
+            minimum: 1
+        - name: number-of-wheels
+          in: path
+          required: true
+          description: Количество колес для добавления
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Колеса успешно добавлены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehicle'
+        '400':
+          description: Неверные параметры (отрицательное количество колес и т.д.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Слишком большой контент
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '415':
+          description: Неподдерживаемый медиа тип
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Транспортное средство не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Конфликт при обновлении
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Необрабатываемые данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /reports/maintenance/{vehicle-id}:
+    get:
+      tags: [reports]
+      summary: Формирование отчета ТО за все время для транспорта
+      description: Генерация полного отчета о техническом обслуживании транспортного средства за весь период эксплуатации
+      parameters:
+        - name: vehicle-id
+          in: path
+          required: true
+          description: ID транспортного средства
+          schema:
+            type: integer
+            minimum: 1
+        - name: format
+          in: query
+          description: Формат отчета
+          schema:
+            type: string
+            enum: [json, pdf, html, csv]
+            default: json
+        - name: include-details
+          in: query
+          description: Включить детальную информацию о работах
+          schema:
+            type: boolean
+            default: true
+        - name: include-costs
+          in: query
+          description: Включить финансовую информацию
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Отчет успешно сформирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceReport'
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            text/html:
+              schema:
+                type: string
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '202':
+          description: Отчет принят в обработку (для асинхронного формирования)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportStatus'
+        '400':
+          description: Неверные параметры (отрицательное количество колес и т.д.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Слишком большой контент
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '415':
+          description: Неподдерживаемый медиа тип
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Транспортное средство не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Конфликт при обновлении
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /vehicles/search/by-coordinates:
+    get:
+      tags: [vehicles]
+      summary: Поиск транспорта по координатам
+      description: Найти транспортные средства по заданным координатам
+      parameters:
+        - name: x
+          in: query
+          required: true
+          description: Координата X
+          schema:
+            type: integer
+            format: int64
+        - name: y
+          in: query
+          required: true
+          description: Координата Y
+          schema:
+            type: integer
+        - name: max_distance
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Успешный поиск
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vehicle'
+        '400':
+          description: Неверные параметры координат
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Транспортные средства не найдены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Слишком большой контент
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '415':
+          description: Неподдерживаемый медиа тип
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Необрабатываемые данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Vehicle:
+      type: object
+      required:
+        - id
+        - name
+        - coordinates
+        - creationDate
+        - capacity
+        - fuelType
+      properties:
+        id:
+          type: integer
+          description: Уникальный идентификатор
+          minimum: 1
+        name:
+          type: string
+          description: Наименование транспортного средства
+          minLength: 1
+        coordinates:
+          $ref: '#/components/schemas/Coordinates'
+        creationDate:
+          type: string
+          format: date-time
+          description: Дата создания
+        enginePower:
+          type: integer
+          description: Мощность двигателя
+          minimum: 1
+          nullable: true
+        numberOfWheels:
+          type: integer
+          description: Количество колес
+          minimum: 1
+          nullable: true
+        capacity:
+          type: number
+          format: float
+          description: Вместимость
+          minimum: 0
+          exclusiveMinimum: true
+        fuelType:
+          $ref: '#/components/schemas/FuelType'
+
+    VehicleCreate:
+      type: object
+      required:
+        - name
+        - coordinates
+        - capacity
+        - fuelType
+      properties:
+        name:
+          type: string
+          description: Наименование транспортного средства
+          minLength: 1
+        coordinates:
+          $ref: '#/components/schemas/Coordinates'
+        enginePower:
+          type: integer
+          description: Мощность двигателя
+          minimum: 1
+          nullable: true
+        numberOfWheels:
+          type: integer
+          description: Количество колес
+          minimum: 1
+          nullable: true
+        capacity:
+          type: number
+          format: float
+          description: Вместимость
+          minimum: 0
+          exclusiveMinimum: true
+        fuelType:
+          $ref: '#/components/schemas/FuelType'
+
+    VehicleUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Наименование транспортного средства
+          minLength: 1
+        coordinates:
+          $ref: '#/components/schemas/Coordinates'
+        enginePower:
+          type: integer
+          description: Мощность двигателя
+          minimum: 1
+          nullable: true
+        numberOfWheels:
+          type: integer
+          description: Количество колес
+          minimum: 1
+          nullable: true
+        capacity:
+          type: number
+          format: float
+          description: Вместимость
+          minimum: 0
+          exclusiveMinimum: true
+        fuelType:
+          $ref: '#/components/schemas/FuelType'
+
+    Coordinates:
+      type: object
+      required:
+        - x
+        - y
+      properties:
+        x:
+          type: integer
+          format: int64
+          description: Координата X
+        y:
+          type: integer
+          description: Координата Y
+          nullable: false
+
+    FuelType:
+      type: string
+      enum: [KEROSENE, ELECTRICITY, DIESEL, ALCOHOL, NUCLEAR]
+      description: Тип топлива
+
+    Error:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Время возникновения ошибки
+        status:
+          type: integer
+          description: HTTP статус код
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        path:
+          type: string
+          description: Путь запроса
+
+    MaintenanceReport:
+      type: object
+      properties:
+        vehicleId:
+          type: integer
+          description: ID транспортного средства
+        vehicleInfo:
+          $ref: '#/components/schemas/Vehicle'
+        reportPeriod:
+          type: object
+          properties:
+            startDate:
+              type: string
+              format: date-time
+            endDate:
+              type: string
+              format: date-time
+        totalMaintenanceCount:
+          type: integer
+          description: Общее количество ТО
+        totalCost:
+          type: number
+          format: double
+          description: Общая стоимость всех ТО
+        maintenanceRecords:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaintenanceRecord'
+        statistics:
+          $ref: '#/components/schemas/MaintenanceStatistics'
+        generatedAt:
+          type: string
+          format: date-time
+
+    MaintenanceRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        date:
+          type: string
+          format: date-time
+        mileage:
+          type: integer
+          description: Пробег на момент ТО
+        description:
+          type: string
+        cost:
+          type: number
+          format: double
+        partsReplaced:
+          type: array
+          items:
+            type: string
+        technician:
+          type: string
+        durationHours:
+          type: number
+          format: float
+
+    MaintenanceStatistics:
+      type: object
+      properties:
+        averageCostPerMaintenance:
+          type: number
+          format: double
+        totalDowntimeHours:
+          type: number
+          format: double
+
+    ReportStatus:
+      type: object
+      properties:
+        reportId:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, PROCESSING, COMPLETED, FAILED]
+        estimatedCompletionTime:
+          type: string
+          format: date-time
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+        downloadUrl:
+          type: string
+          format: uri
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    TooLarge:
+      description: Слишком большой контент
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnsupportedMediaType:
+      description: Неподдерживаемый медиа тип
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    TooManyRequests:
+      description: Слишком много запросов
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServiceUnavailable:
+      description: Сервис временно недоступен
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  parameters:
+    PageNumber:
+      name: page
+      in: query
+      description: Номер страницы
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSize:
+      name: size
+      in: query
+      description: Размер страницы
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20

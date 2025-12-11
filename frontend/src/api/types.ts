@@ -96,17 +96,6 @@ export interface Dealership {
     rating?: number;
 }
 
-export interface VehicleSearchCriteria {
-    fuelType?: FuelType;
-    minEnginePower?: number;
-    maxEnginePower?: number;
-    minCapacity?: number;
-    maxCapacity?: number;
-    minWheels?: number;
-    maxWheels?: number;
-    vehicleType?: 'CAR' | 'TRUCK' | 'MOTORCYCLE' | 'BUS' | 'SPECIAL';
-}
-
 export interface AvailableVehicle {
     vehicle: Vehicle;
     price: number;

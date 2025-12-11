@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: app
+  cloud:
+    consul:
+      host: consul
+      port: 8500
+      discovery:
+        enabled: true
+        instance-id: ${spring.application.name}:${random.uuid}
+        prefer-ip-address: true
+        health-check-path: /actuator/health
+        health-check-interval: 15s
+  datasource:
+    url: jdbc:h2:mem:mydb
+    username: sa
+    password: password
+    driverClassName: org.h2.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: true
+    properties:
+      format_sql: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+server:
+  port: ${PORT:8452}
+  ssl:
+    enabled: true
+    key-store-type: PKCS12
+    key-store: classpath:keystore/baeldung.p12
+    key-store-password: changeit
+    key-alias: baeldung
+
+trust:
+  store: classpath:keystore/baeldung.p12
+  store.password: changeit
+
+logging:
+  level:
+    root: info

@@ -1,0 +1,11 @@
+# Включаем HTTPS для http-listener-2
+set configs.config.server-config.network-config.protocols.protocol.http-listener-2.security-enabled=true
+
+# Настройка keystore
+set configs.config.server-config.network-config.protocols.protocol.http-listener-2.ssl.key-store=/opt/payara/appserver/glassfish/domains/domain1/config/keystore.p12
+set configs.config.server-config.network-config.protocols.protocol.http-listener-2.ssl.trust-store=/opt/payara/appserver/glassfish/domains/domain1/config/keystore.p12
+set configs.config.server-config.network-config.protocols.protocol.http-listener-2.ssl.key-store-password=changeit
+set configs.config.server-config.network-config.protocols.protocol.http-listener-2.ssl.trust-store-password=changeit
+
+# Меняем порт HTTPS
+set configs.config.server-config.network-config.network-listeners.network-listener.http-listener-2.port=${ENV=APP_PORT}
