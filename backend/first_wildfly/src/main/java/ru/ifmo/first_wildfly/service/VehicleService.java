@@ -1,226 +1,259 @@
 package ru.ifmo.first_wildfly.service;
 
+import jakarta.ejb.Stateless;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Root;
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.*;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
 import ru.ifmo.first_wildfly.domain.VehiclePage;
-import ru.ifmo.first_wildfly.domain.VehicleRepository;
 import ru.ifmo.first_wildfly.domain.VehicleSearchCriteria;
-import ru.ifmo.first_wildfly.domain.VehicleSpecification;
 import ru.ifmo.first_wildfly.domain.entity.CoordinatesEntity;
 import ru.ifmo.first_wildfly.domain.entity.FuelType;
 import ru.ifmo.first_wildfly.domain.entity.VehicleEntity;
+import ru.ifmo.first_wildfly.dto.*;
 import ru.ifmo.first_wildfly.exception.FirstException;
-import ru.ifmo.first_wildfly.model.*;
 
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
-@Service
-@RequiredArgsConstructor
+@Stateless
 public class VehicleService {
 
     @PersistenceContext
     private EntityManager entityManager;
 
-    private final VehicleRepository vehicleRepository;
-
+    // --- CREATE ---
     @Transactional
-    public Vehicle createVehicle(VehicleCreate vehicleCreate) {
-        var created = vehicleRepository.save(toEntity(vehicleCreate));
-        return toModel(created);
+    public VehicleDto createVehicle(VehicleCreateDto dto) {
+        var entity = toEntity(dto);
+        entityManager.persist(entity);
+        return toDto(entity);
     }
 
-    public Optional<Vehicle> getById(Integer id) {
-        return vehicleRepository.findById(id)
-                .map(this::toModel);
+    // --- READ by ID ---
+    public Optional<VehicleDto> getById(Integer id) {
+        VehicleEntity entity = entityManager.find(VehicleEntity.class, id);
+        return entity != null ? Optional.of(toDto(entity)) : Optional.empty();
     }
 
+    // --- DELETE ---
     @Transactional
     public void delete(Integer id) {
-        if (!vehicleRepository.existsById(id)) {
-            throw new FirstException(HttpStatus.NOT_FOUND, "Vehicle wasn't found");
+        VehicleEntity entity = entityManager.find(VehicleEntity.class, id);
+        if (entity == null) {
+            throw new FirstException("Vehicle wasn't found");
         }
-        vehicleRepository.deleteById(id);
+        entityManager.remove(entity);
     }
 
-    public VehiclesGet200Response getVehicles(VehicleSearchCriteria criteria, VehiclePage vehiclePage) {
-        var spec = VehicleSpecification.buildSpecification(criteria);
-        var sort = buildSort(vehiclePage.getSort(), vehiclePage.getOrder());
-        var pageable = PageRequest.of(
-                vehiclePage.getPage() - 1,
-                vehiclePage.getSize(),
-                sort
-        );
-        var page = vehicleRepository.findAll(spec, pageable);
-        return buildGetVehiclesResponse(page);
+    // --- GET LIST with filtering, sorting, pagination ---
+    public PagedVehicleResponseDto getVehicles(VehicleSearchCriteria criteria, VehiclePage pageParams) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+
+        // Count total
+        CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
+        Root<VehicleEntity> countRoot = countQuery.from(VehicleEntity.class);
+        countQuery.select(cb.count(countRoot));
+        applyFilters(countRoot, countQuery, cb, criteria);
+        Long total = entityManager.createQuery(countQuery).getSingleResult();
+
+        if (total == 0) {
+            return emptyPagedResponse(pageParams.getPage(), total.intValue());
+        }
+
+        // Main query
+        CriteriaQuery<VehicleEntity> query = cb.createQuery(VehicleEntity.class);
+        Root<VehicleEntity> root = query.from(VehicleEntity.class);
+        applyFilters(root, query, cb, criteria);
+
+        // Sorting
+        String sortField = pageParams.getSort();
+        if (sortField == null || !isValidSortField(sortField)) {
+            sortField = "id";
+        }
+        Order order = "desc".equalsIgnoreCase(pageParams.getOrder())
+                ? cb.desc(root.get(sortField))
+                : cb.asc(root.get(sortField));
+        query.orderBy(order);
+
+        TypedQuery<VehicleEntity> typedQuery = entityManager.createQuery(query);
+
+        // Pagination
+        int page = pageParams.getPage() != null ? pageParams.getPage() : 1;
+        int size = pageParams.getSize() != null ? pageParams.getSize() : 20;
+        if (page < 1) page = 1;
+        if (size < 1) size = 20;
+        if (size > 100) size = 100;
+
+        typedQuery.setFirstResult((page - 1) * size);
+        typedQuery.setMaxResults(size);
+
+        List<VehicleEntity> content = typedQuery.getResultList();
+
+        return buildPagedResponse(content, total.intValue(), page, size);
     }
 
+    // --- UPDATE ---
     @Transactional
-    public Vehicle update(Integer id, VehicleUpdate vehicleUpdate) {
-        var optionalVehicle = vehicleRepository.findById(id);
-        if (optionalVehicle.isEmpty()) {
-            throw new FirstException(HttpStatus.NOT_FOUND, "Vehicle wasn't found");
+    public VehicleDto update(Integer id, VehicleUpdateDto dto) {
+        VehicleEntity entity = entityManager.find(VehicleEntity.class, id);
+        if (entity == null) {
+            throw new FirstException("Vehicle wasn't found");
         }
-        var vehicle = optionalVehicle.get();
-        if (nonNull(vehicleUpdate.getCapacity())) {
-            vehicle.setCapacity(vehicleUpdate.getCapacity());
+
+        if (nonNull(dto.getName())) entity.setName(dto.getName());
+        if (nonNull(dto.getCapacity())) entity.setCapacity(dto.getCapacity());
+        if (nonNull(dto.getEnginePower())) entity.setEnginePower(dto.getEnginePower().longValue());
+        if (nonNull(dto.getNumberOfWheels())) entity.setNumberOfWheels(dto.getNumberOfWheels().longValue());
+        if (nonNull(dto.getFuelType())) entity.setFuelType(toEntityFuelType(dto.getFuelType()));
+
+        if (nonNull(dto.getCoordinates())) {
+            CoordinatesEntity coords = entity.getCoordinates();
+            if (nonNull(dto.getCoordinates().getX())) coords.setX(dto.getCoordinates().getX());
+            if (nonNull(dto.getCoordinates().getY())) coords.setY(dto.getCoordinates().getY());
         }
-        if (nonNull(vehicleUpdate.getName())) {
-            vehicle.setName(vehicleUpdate.getName());
-        }
-        if (nonNull(vehicleUpdate.getEnginePower())) {
-            vehicle.setEnginePower(vehicleUpdate.getEnginePower().longValue());
-        }
-        if (nonNull(vehicleUpdate.getFuelType())) {
-            vehicle.setFuelType(resolveFuelType(vehicleUpdate));
-        }
-        if (nonNull(vehicleUpdate.getNumberOfWheels())) {
-            vehicle.setNumberOfWheels(vehicleUpdate.getNumberOfWheels().longValue());
-        }
-        if (nonNull(vehicleUpdate.getCoordinates())) {
-            var coordinates = vehicle.getCoordinates();
-            if (nonNull(vehicleUpdate.getCoordinates().getX())) {
-                coordinates.setX(vehicleUpdate.getCoordinates().getX());
-            }
-            if (nonNull(vehicleUpdate.getCoordinates().getY())) {
-                coordinates.setX(vehicleUpdate.getCoordinates().getY());
-            }
-        }
-        return toModel(vehicle);
+
+        // No need to call persist/merge — entity is managed
+        return toDto(entity);
     }
 
-    public List<Vehicle> vehiclesSearchNameStartsWithPrefix(String prefix) {
-        return vehicleRepository.findAll(buildPrefixSearchSpec(prefix))
-                .stream()
-                .map(this::toModel)
-                .toList();
+    // --- SEARCH by prefix ---
+    public List<VehicleDto> vehiclesSearchNameStartsWithPrefix(String prefix) {
+        String jpql = "SELECT v FROM VehicleEntity v WHERE LOWER(v.name) LIKE :prefix";
+        TypedQuery<VehicleEntity> query = entityManager.createQuery(jpql, VehicleEntity.class);
+        query.setParameter("prefix", prefix.toLowerCase() + "%");
+        return query.getResultList().stream().map(this::toDto).collect(Collectors.toList());
     }
 
-    public VehiclesStatsAverageEnginePowerGet200Response countAverageEnginePowerGet() {
-        var criteriaBuilder = entityManager.getCriteriaBuilder();
-        var query = criteriaBuilder.createQuery(Double.class);
-        var root = query.from(VehicleEntity.class);
-
-        query.select(criteriaBuilder.avg(root.get("enginePower")));
-
-        var averageEnginePower = entityManager.createQuery(query)
+    // --- STAT: average engine power ---
+    public AverageEnginePowerResponseDto countAverageEnginePowerGet() {
+        Double avg = entityManager.createQuery(
+                        "SELECT AVG(v.enginePower) FROM VehicleEntity v", Double.class)
                 .getSingleResult();
-        if (isNull(averageEnginePower)) {
-            throw new FirstException(HttpStatus.NOT_FOUND, "No vehicles in collection");
+        if (isNull(avg)) {
+            throw new FirstException("No vehicles in collection");
         }
-        return new VehiclesStatsAverageEnginePowerGet200Response()
-                .averageEnginePower(averageEnginePower.floatValue());
+        return new AverageEnginePowerResponseDto(avg.floatValue());
     }
 
-    public VehiclesStatsCountByWheelsWheelsGet200Response getCountByWheelsWheels(Integer wheels) {
-        var count = (int) vehicleRepository.count((r, q, c) -> c.equal(r.get("numberOfWheels"), wheels));
-        return new VehiclesStatsCountByWheelsWheelsGet200Response()
-                .count(count);
+    // --- STAT: count by wheels ---
+    public CountByWheelsResponseDto getCountByWheelsWheels(Integer wheels) {
+        Long count = entityManager.createQuery(
+                        "SELECT COUNT(v) FROM VehicleEntity v WHERE v.numberOfWheels = :wheels", Long.class)
+                .setParameter("wheels", wheels.longValue())
+                .getSingleResult();
+        return new CountByWheelsResponseDto(count.intValue());
     }
 
-    private Specification<VehicleEntity> buildPrefixSearchSpec(String prefix) {
-        return (Root<VehicleEntity> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) -> {
-            return criteriaBuilder.like(
-                    criteriaBuilder.lower(root.get("name")),
-                    prefix.toLowerCase() + "%"
-            );
-        };
-    }
+    // --- HELPERS ---
 
-    private FuelType resolveFuelType(VehicleUpdate vehicleUpdate) {
-        return FuelType.getByName(vehicleUpdate.getFuelType().name())
-                .orElseThrow(() -> new FirstException(HttpStatus.BAD_REQUEST, "Wrong fuel type"));
-    }
+    private void applyFilters(Root<VehicleEntity> root, CriteriaQuery<?> query, CriteriaBuilder cb, VehicleSearchCriteria c) {
+        Predicate predicate = cb.conjunction();
 
-    private VehiclesGet200Response buildGetVehiclesResponse(Page<VehicleEntity> page) {
-        var response = new VehiclesGet200Response();
-        response.setTotalPages(page.getTotalPages());
-        response.setCurrentPage(page.getNumber() + 1);
-        response.setTotalElements((int) page.getTotalElements());
-        var content = page.getContent().stream()
-                .map(this::toModel)
-                .collect(Collectors.toList());
-        response.setContent(content);
-        return response;
-    }
-
-    private Sort buildSort(String sortField, String order) {
-        if (sortField == null) {
-            return Sort.by("id").ascending();
+        if (c.getName() != null && !c.getName().isEmpty()) {
+            predicate = cb.and(predicate, cb.equal(root.get("name"), c.getName()));
         }
 
-        var allowedSortFields = Arrays.asList("name", "enginePower", "numberOfWheels", "capacity", "fuelType");
-        var actualSortField = allowedSortFields.contains(sortField) ? sortField : "id";
-
-        return order.equalsIgnoreCase("desc")
-                ? Sort.by(actualSortField).descending()
-                : Sort.by(actualSortField).ascending();
-    }
-
-    private Vehicle toModel(VehicleEntity entity) {
-        var model = new Vehicle(
-                entity.getId(),
-                entity.getName(),
-                toModel(entity.getCoordinates()),
-                nonNull(entity.getCreationDate()) ? entity.getCreationDate().toOffsetDateTime() : null,
-                entity.getCapacity(),
-                toModel(entity.getFuelType())
-        );
-        if (nonNull(entity.getEnginePower())) {
-            model.setEnginePower(entity.getEnginePower().intValue());
+        if (c.getMinEnginePower() != null) {
+            predicate = cb.and(predicate, cb.ge(root.get("enginePower"), c.getMinEnginePower().longValue()));
         }
-        if (nonNull(entity.getNumberOfWheels())) {
-            model.setNumberOfWheels(entity.getNumberOfWheels().intValue());
+        if (c.getMaxEnginePower() != null) {
+            predicate = cb.and(predicate, cb.le(root.get("enginePower"), c.getMaxEnginePower().longValue()));
         }
-        return model;
+
+        if (c.getMinWheels() != null) {
+            predicate = cb.and(predicate, cb.ge(root.get("numberOfWheels"), c.getMinWheels().longValue()));
+        }
+        if (c.getMaxWheels() != null) {
+            predicate = cb.and(predicate, cb.le(root.get("numberOfWheels"), c.getMaxWheels().longValue()));
+        }
+
+        if (c.getMinCapacity() != null) {
+            predicate = cb.and(predicate, cb.gt(root.get("capacity"), c.getMinCapacity().floatValue()));
+        }
+        if (c.getMaxCapacity() != null) {
+            predicate = cb.and(predicate, cb.le(root.get("capacity"), c.getMaxCapacity().floatValue()));
+        }
+
+        if (c.getFuelType() != null && !c.getFuelType().isEmpty()) {
+            try {
+                FuelType fuel = FuelType.valueOf(c.getFuelType());
+                predicate = cb.and(predicate, cb.equal(root.get("fuelType"), fuel));
+            } catch (IllegalArgumentException ignored) {
+                // invalid fuel → no match
+                predicate = cb.and(predicate, cb.disjunction()); // always false
+            }
+        }
+
+        query.where(predicate);
     }
 
-    private ru.ifmo.first_wildfly.model.FuelType toModel(FuelType fuelType) {
-        return ru.ifmo.first_wildfly.model.FuelType.fromValue(fuelType.name());
+    private boolean isValidSortField(String field) {
+        return List.of("id", "name", "enginePower", "numberOfWheels", "capacity", "fuelType").contains(field);
     }
 
-    private Coordinates toModel(CoordinatesEntity coordinates) {
-        return new Coordinates(
-                coordinates.getX(),
-                coordinates.getY()
+    private PagedVehicleResponseDto buildPagedResponse(List<VehicleEntity> content, int totalElements, int currentPage, int size) {
+        int totalPages = (int) Math.ceil((double) totalElements / size);
+        return new PagedVehicleResponseDto(
+                content.stream().map(this::toDto).collect(Collectors.toList()),
+                totalElements,
+                totalPages,
+                currentPage
         );
     }
 
-    private VehicleEntity toEntity(VehicleCreate vehicleCreate) {
-        var coordinates = CoordinatesEntity.builder()
-                .x(vehicleCreate.getCoordinates().getX())
-                .y(vehicleCreate.getCoordinates().getY())
-                .build();
-        return VehicleEntity.builder()
-                .name(vehicleCreate.getName())
-                .fuelType(resolveFuelType(vehicleCreate))
-                .enginePower(nonNull(vehicleCreate.getEnginePower()) ? vehicleCreate.getEnginePower().longValue() : null)
-                .capacity(vehicleCreate.getCapacity())
-                .numberOfWheels(nonNull(vehicleCreate.getNumberOfWheels()) ? vehicleCreate.getNumberOfWheels().longValue() : null)
-                .coordinates(coordinates)
-                .creationDate(ZonedDateTime.now())
-                .build();
+    private PagedVehicleResponseDto emptyPagedResponse(int requestedPage, int totalElements) {
+        return new PagedVehicleResponseDto(
+                List.of(),
+                totalElements,
+                0,
+                requestedPage
+        );
     }
 
-    private FuelType resolveFuelType(VehicleCreate vehicleCreate) {
-        return FuelType.getByName(vehicleCreate.getFuelType().name())
-                .orElseThrow(() -> new FirstException(HttpStatus.BAD_REQUEST, "Wrong fuel type"));
+    // --- MAPPING ---
+
+    private VehicleDto toDto(VehicleEntity e) {
+        return new VehicleDto(
+                e.getId(),
+                e.getName(),
+                new CoordinatesDto(e.getCoordinates().getX(), e.getCoordinates().getY()),
+                e.getCreationDate() != null ? e.getCreationDate().format(ISO_OFFSET_DATE_TIME) : null,
+                e.getEnginePower() != null ? e.getEnginePower().intValue() : null,
+                e.getNumberOfWheels() != null ? e.getNumberOfWheels().intValue() : null,
+                e.getCapacity(),
+                toDtoFuelType(e.getFuelType())
+        );
+    }
+
+    private FuelTypeDto toDtoFuelType(FuelType entity) {
+        return FuelTypeDto.valueOf(entity.name());
+    }
+
+    private FuelType toEntityFuelType(FuelTypeDto dto) {
+        return FuelType.valueOf(dto.name());
+    }
+
+    private VehicleEntity toEntity(VehicleCreateDto dto) {
+        var coords = new CoordinatesEntity();
+        coords.setX(dto.getCoordinates().getX());
+        coords.setY(dto.getCoordinates().getY());
+
+        var entity = new VehicleEntity();
+        entity.setName(dto.getName());
+        entity.setCoordinates(coords);
+        entity.setCapacity(dto.getCapacity());
+        entity.setEnginePower(dto.getEnginePower() != null ? dto.getEnginePower().longValue() : null);
+        entity.setNumberOfWheels(dto.getNumberOfWheels() != null ? dto.getNumberOfWheels().longValue() : null);
+        entity.setFuelType(toEntityFuelType(dto.getFuelType()));
+        entity.setCreationDate(ZonedDateTime.now());
+        return entity;
     }
 }

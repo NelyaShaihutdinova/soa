@@ -1,87 +1,57 @@
 services:
-  consul:
-    image: hashicorp/consul:1.19
-    container_name: consul
-    ports:
-      - "8500:8500"
-    command: "agent -server -bootstrap-expect=1 -ui -client=0.0.0.0"
+#  consul:
+#    image: hashicorp/consul:1.19
+#    container_name: consul
+#    ports:
+#      - "8500:8500"
+#    command: "agent -server -bootstrap-expect=1 -ui -client=0.0.0.0"
 
   dictionary_first:
     build:
       context: ./first_wildfly
       dockerfile: Dockerfile
     container_name: dictionary_first
-    environment:
-      - APP_PORT=8452
     ports:
-      - "8452:8452"
-    depends_on:
-      - consul
-    volumes:
-      - ./payara-micro-6.2025.9.jar:/opt/payara/payara-micro.jar
-    healthcheck:
-      test: ["CMD", "curl", "-f", "https://localhost:8452/app/actuator/health", "--insecure"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - "8081:8080"
 
-  dictionary_second:
-    build:
-      context: ./first_wildfly
-      dockerfile: Dockerfile
-    container_name: dictionary_second
-    environment:
-      - APP_PORT=8453
-    ports:
-      - "8453:8453"
-    depends_on:
-      - consul
-    volumes:
-      - ./payara-micro-6.2025.9.jar:/opt/payara/payara-micro.jar
-    healthcheck:
-      test: ["CMD", "curl", "-f", "https://localhost:8453/app/actuator/health", "--insecure"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  second_payara_1:
-    build:
-      context: ./second_ejb
-      dockerfile: Dockerfile
-    container_name: second_payara_1
-    environment:
-      - APP_PORT=8459
-    ports:
-      - "8459:8459"
-    depends_on:
-      - dictionary_first
-      - dictionary_second
-      - consul
-
-  second_payara_2:
-    build:
-      context: ./second_ejb
-      dockerfile: Dockerfile
-    container_name: second_payara_2
-    environment:
-      - APP_PORT=8460
-    ports:
-      - "8460:8460"
-    depends_on:
-      - dictionary_first
-      - dictionary_second
-      - consul
-
-  haproxy:
-    image: haproxy:latest
-    container_name: haproxy
-    ports:
-      - "8443:8443"
-    volumes:
-      - ./haproxy-second.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
-      - ./baeldung.pem:/usr/local/etc/haproxy/certs/baeldung.pem:ro
-    depends_on:
-      - dictionary_first
-      - dictionary_second
-      - second_payara_1
-      - second_payara_2
+#  second_payara_1:
+#    build:
+#      context: ./second_ejb
+#      dockerfile: Dockerfile
+#    container_name: second_payara_1
+#    environment:
+#      - APP_PORT=8459
+#    ports:
+#      - "8459:8459"
+#    depends_on:
+#      - dictionary_first
+#      - dictionary_second
+#      - consul
+#
+#  second_payara_2:
+#    build:
+#      context: ./second_ejb
+#      dockerfile: Dockerfile
+#    container_name: second_payara_2
+#    environment:
+#      - APP_PORT=8460
+#    ports:
+#      - "8460:8460"
+#    depends_on:
+#      - dictionary_first
+#      - dictionary_second
+#      - consul
+#
+#  haproxy:
+#    image: haproxy:latest
+#    container_name: haproxy
+#    ports:
+#      - "8443:8443"
+#    volumes:
+#      - ./haproxy-second.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+#      - ./baeldung.pem:/usr/local/etc/haproxy/certs/baeldung.pem:ro
+#    depends_on:
+#      - dictionary_first
+#      - dictionary_second
+#      - second_payara_1
+#      - second_payara_2

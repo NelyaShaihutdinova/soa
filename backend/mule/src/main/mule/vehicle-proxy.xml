@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc"
+      xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+      xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="
+        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+        http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/wsc/current/mule-wsc.xsd
+        http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+    <!-- SOAP-конфигурация -->
+    <wsc:config name="VehicleSoapConfig"
+                serviceAddress="http://localhost:8081/first_wildfly/VehicleAPI"
+                wsdlLocation="http://localhost:8081/first_wildfly/VehicleAPI?wsdl"/>
+
+    <!-- HTTP-слушатель -->
+    <http:listener-config name="HttpListener" host="0.0.0.0" port="8452"/>
+
+    <!-- 1. GET /api/vehicles/{id} -->
+    <flow name="getVehicleById">
+        <http:listener config-ref="HttpListener" path="/api/vehicles/{id}" allowedMethods="GET"/>
+        <wsc:consume config-ref="VehicleSoapConfig" operation="getVehicleById">
+            <wsc:message>
+                <wsc:body>
+                    <ee:transform>
+                        <ee:message>
+                            <ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+---
+{
+    getVehicleById: {
+        id: attributes.uriParams.id as Number
+    }
+}]]></ee:set-payload>
+                        </ee:message>
+                    </ee:transform>
+                </wsc:body>
+            </wsc:message>
+        </wsc:consume>
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload.getVehicleByIdResponse.VehicleDto]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+
+    <!-- 2. POST /api/vehicles -->
+    <flow name="createVehicle">
+        <http:listener config-ref="HttpListener" path="/api/vehicles" allowedMethods="POST"/>
+        <wsc:consume config-ref="VehicleSoapConfig" operation="createVehicle">
+            <wsc:message>
+                <wsc:body>
+                    <ee:transform>
+                        <ee:message>
+                            <ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+---
+{
+    createVehicle: {
+        vehicle: payload
+    }
+}]]></ee:set-payload>
+                        </ee:message>
+                    </ee:transform>
+                </wsc:body>
+            </wsc:message>
+        </wsc:consume>
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload.createVehicleResponse.VehicleDto]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+
+    <!-- 3. PUT /api/vehicles/{id} -->
+    <flow name="updateVehicle">
+        <http:listener config-ref="HttpListener" path="/api/vehicles/{id}" allowedMethods="PUT"/>
+        <wsc:consume config-ref="VehicleSoapConfig" operation="updateVehicle">
+            <wsc:message>
+                <wsc:body>
+                    <ee:transform>
+                        <ee:message>
+                            <ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+---
+{
+    updateVehicle: {
+        id: attributes.uriParams.id as Number,
+        vehicle: payload
+    }
+}]]></ee:set-payload>
+                        </ee:message>
+                    </ee:transform>
+                </wsc:body>
+            </wsc:message>
+        </wsc:consume>
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload.updateVehicleResponse.VehicleDto]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+
+    <!-- 4. DELETE /api/vehicles/{id} -->
+    <flow name="deleteVehicle">
+        <http:listener config-ref="HttpListener" path="/api/vehicles/{id}" allowedMethods="DELETE"/>
+        <wsc:consume config-ref="VehicleSoapConfig" operation="deleteVehicle">
+            <wsc:message>
+                <wsc:body>
+                    <ee:transform>
+                        <ee:message>
+                            <ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+---
+{
+    deleteVehicle: {
+        id: attributes.uriParams.id as Number
+    }
+}]]></ee:set-payload>
+                        </ee:message>
+                    </ee:transform>
+                </wsc:body>
+            </wsc:message>
+        </wsc:consume>
+        <!-- Нет тела в ответе → возвращаем 204 -->
+        <set-payload value=""/>
+        <set-variable variableName="httpStatus" value="204"/>
+    </flow>
+
+    <!-- 5. GET /api/vehicles (с параметрами) -->
+    <flow name="getVehicles">
+        <http:listener config-ref="HttpListener" path="/api/vehicles" allowedMethods="GET"/>
+        <wsc:consume config-ref="VehicleSoapConfig" operation="getVehicles">
+            <wsc:message>
+                <wsc:body>
+                    <ee:transform>
+                        <ee:message>
+                            <ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+---
+{
+    getVehicles: {
+        page: attributes.queryParams.page default "0",
+        size: attributes.queryParams.size default "10",
+        sort: attributes.queryParams.sort,
+        order: attributes.queryParams.order,
+        name: attributes.queryParams.name,
+        minEnginePower: attributes.queryParams.minEnginePower,
+        maxEnginePower: attributes.queryParams.maxEnginePower,
+        minWheels: attributes.queryParams.minWheels,
+        maxWheels: attributes.queryParams.maxWheels,
+        minCapacity: attributes.queryParams.minCapacity,
+        maxCapacity: attributes.queryParams.maxCapacity,
+        fuelType: attributes.queryParams.fuelType
+    }
+}]]></ee:set-payload>
+                        </ee:message>
+                    </ee:transform>
+                </wsc:body>
+            </wsc:message>
+        </wsc:consume>
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload.getVehiclesResponse.PagedVehicleResponseDto]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+
+    <!-- 6. GET /api/vehicles/search/prefix/{prefix} -->
+    <flow name="searchByNamePrefix">
+        <http:listener config-ref="HttpListener" path="/api/vehicles/search/prefix/{prefix}" allowedMethods="GET"/>
+        <wsc:consume config-ref="VehicleSoapConfig" operation="searchByNamePrefix">
+            <wsc:message>
+                <wsc:body>
+                    <ee:transform>
+                        <ee:message>
+                            <ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+---
+{
+    searchByNamePrefix: {
+        prefix: attributes.uriParams.prefix
+    }
+}]]></ee:set-payload>
+                        </ee:message>
+                    </ee:transform>
+                </wsc:body>
+            </wsc:message>
+        </wsc:consume>
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload.searchByNamePrefixResponse]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+
+    <!-- 7. GET /api/stats/average-engine-power -->
+    <flow name="getAverageEnginePower">
+        <http:listener config-ref="HttpListener" path="/api/stats/average-engine-power" allowedMethods="GET"/>
+        <wsc:consume config-ref="VehicleSoapConfig" operation="getAverageEnginePower"/>
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload.getAverageEnginePowerResponse.AverageEnginePowerResponseDto]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+
+    <!-- 8. GET /api/stats/count-by-wheels/{wheels} -->
+    <flow name="getCountByWheels">
+        <http:listener config-ref="HttpListener" path="/api/stats/count-by-wheels/{wheels}" allowedMethods="GET"/>
+        <wsc:consume config-ref="VehicleSoapConfig" operation="getCountByWheels">
+            <wsc:message>
+                <wsc:body>
+                    <ee:transform>
+                        <ee:message>
+                            <ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+---
+{
+    getCountByWheels: {
+        wheels: attributes.uriParams.wheels as Number
+    }
+}]]></ee:set-payload>
+                        </ee:message>
+                    </ee:transform>
+                </wsc:body>
+            </wsc:message>
+        </wsc:consume>
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload.getCountByWheelsResponse.CountByWheelsResponseDto]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+
+</mule>
