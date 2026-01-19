@@ -1,6 +1,5 @@
 import React, {useEffect} from 'react';
 import {Table, Button, Space, Tag, Popconfirm, message} from 'antd';
-// @ts-ignore
 import type {ColumnsType, SortOrder} from 'antd/es/table';
 import {
     EditOutlined,
@@ -31,6 +30,7 @@ const VehicleList: React.FC<VehicleListProps> = ({onEdit, onView}) => {
         try {
             await dispatch(deleteVehicle(id)).unwrap();
             message.success('Vehicle deleted successfully');
+            dispatch(fetchVehicles(filters));
         } catch (error) {
             message.error('Failed to delete vehicle');
         }
@@ -86,6 +86,7 @@ const VehicleList: React.FC<VehicleListProps> = ({onEdit, onView}) => {
             width: 80,
             sorter: true,
             sortOrder: getSortOrder('id'),
+            render: (id: string | number) => Number(id),
         },
         {
             title: (
@@ -120,7 +121,7 @@ const VehicleList: React.FC<VehicleListProps> = ({onEdit, onView}) => {
             ),
             dataIndex: 'enginePower',
             key: 'enginePower',
-            render: (power: number) => power || 'N/A',
+            render: (power: number | undefined) => power !== undefined ? power : 'N/A',
             sorter: true,
             sortOrder: getSortOrder('enginePower'),
         },
@@ -139,7 +140,7 @@ const VehicleList: React.FC<VehicleListProps> = ({onEdit, onView}) => {
             ),
             dataIndex: 'numberOfWheels',
             key: 'numberOfWheels',
-            render: (wheels: number) => wheels || 'N/A',
+            render: (wheels: number | undefined) => wheels !== undefined ? wheels : 'N/A',
             sorter: true,
             sortOrder: getSortOrder('numberOfWheels'),
         },
@@ -158,6 +159,7 @@ const VehicleList: React.FC<VehicleListProps> = ({onEdit, onView}) => {
             ),
             dataIndex: 'capacity',
             key: 'capacity',
+            render: (capacity: number) => capacity,
             sorter: true,
             sortOrder: getSortOrder('capacity'),
         },
@@ -209,7 +211,7 @@ const VehicleList: React.FC<VehicleListProps> = ({onEdit, onView}) => {
                     </Button>
                     <Popconfirm
                         title="Are you sure to delete this vehicle?"
-                        onConfirm={() => handleDelete(record.id)}
+                        onConfirm={() => handleDelete(Number(record.id))}
                         okText="Yes"
                         cancelText="No"
                     >
@@ -232,7 +234,8 @@ const VehicleList: React.FC<VehicleListProps> = ({onEdit, onView}) => {
         };
         return colors[fuelType] || 'default';
     };
-    const tableData = vehicles.map(item => item.vehicle);
+
+    const tableData = vehicles;
 
     return (
         <Table
