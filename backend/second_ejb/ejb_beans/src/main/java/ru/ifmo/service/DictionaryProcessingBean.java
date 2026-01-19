@@ -40,7 +40,7 @@ import static java.util.stream.Stream.concat;
 @Remote(DictionaryProcessingRemote.class)
 public class DictionaryProcessingBean implements DictionaryProcessingRemote {
 
-    private static final String EXTERNAL_SERVICE_BASE_URL = "https://haproxy:8443/app";
+    private static final String EXTERNAL_SERVICE_BASE_URL = "https://haproxy:8443/api";
 
     @Override
     public List<Vehicle> searchVehiclesByEnginePower(Integer from, Integer to) {

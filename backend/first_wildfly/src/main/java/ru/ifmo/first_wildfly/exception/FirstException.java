@@ -5,8 +5,10 @@ import lombok.Getter;
 @Getter
 public class FirstException extends RuntimeException {
 
-    public FirstException(String message) {
-        super(message);
-    }
+    private final int httpStatus;
 
+    public FirstException(String message, int httpStatus) {
+        super(message);
+        this.httpStatus = httpStatus;
+    }
 }

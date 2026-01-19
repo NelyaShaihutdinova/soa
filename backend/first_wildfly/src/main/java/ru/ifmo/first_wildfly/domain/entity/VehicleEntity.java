@@ -21,6 +21,7 @@ public class VehicleEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(name = "name")
     private String name;
 
     @ManyToOne(cascade = ALL)
@@ -36,8 +37,10 @@ public class VehicleEntity {
     @Column(name = "number_of_wheels")
     private Long numberOfWheels;
 
+    @Column(name = "capacity")
     private float capacity;
 
+    @Column(name = "fuel_type")
     @Enumerated(STRING)
     private FuelType fuelType;
 }

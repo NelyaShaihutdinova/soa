@@ -14,7 +14,7 @@ public class PagedVehicleResponseDto implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @XmlElement(name = "vehicle")
-    private List<VehicleDto> content;
+    private List<VehicleDto> vehicle;
 
     @XmlElement
     private int totalElements;
@@ -27,15 +27,28 @@ public class PagedVehicleResponseDto implements Serializable {
 
     public PagedVehicleResponseDto() {}
 
-    public PagedVehicleResponseDto(List<VehicleDto> content, int totalElements, int totalPages, int currentPage) {
-        this.content = content;
+    public PagedVehicleResponseDto(List<VehicleDto> vehicle, int totalElements, int totalPages, int currentPage) {
+        this.vehicle = vehicle;
         this.totalElements = totalElements;
         this.totalPages = totalPages;
         this.currentPage = currentPage;
     }
 
-    public List<VehicleDto> getContent() { return content; }
-    public void setContent(List<VehicleDto> content) { this.content = content; }
+    public List<VehicleDto> getVehicle() {
+        return vehicle;
+    }
+
+    public void setVehicle(List<VehicleDto> vehicle) {
+        this.vehicle = vehicle;
+    }
+
+    public List<VehicleDto> getContent() {
+        return vehicle;
+    }
+
+    public void setContent(List<VehicleDto> content) {
+        this.vehicle = content;
+    }
 
     public int getTotalElements() { return totalElements; }
     public void setTotalElements(int totalElements) { this.totalElements = totalElements; }

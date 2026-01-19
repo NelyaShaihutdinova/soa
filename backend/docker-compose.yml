@@ -1,11 +1,4 @@
 services:
-#  consul:
-#    image: hashicorp/consul:1.19
-#    container_name: consul
-#    ports:
-#      - "8500:8500"
-#    command: "agent -server -bootstrap-expect=1 -ui -client=0.0.0.0"
-
   dictionary_first:
     build:
       context: ./first_wildfly
@@ -13,45 +6,68 @@ services:
     container_name: dictionary_first
     ports:
       - "8081:8080"
+    networks:
+      - mynet
 
-#  second_payara_1:
-#    build:
-#      context: ./second_ejb
-#      dockerfile: Dockerfile
-#    container_name: second_payara_1
-#    environment:
-#      - APP_PORT=8459
-#    ports:
-#      - "8459:8459"
-#    depends_on:
-#      - dictionary_first
-#      - dictionary_second
-#      - consul
-#
-#  second_payara_2:
-#    build:
-#      context: ./second_ejb
-#      dockerfile: Dockerfile
-#    container_name: second_payara_2
-#    environment:
-#      - APP_PORT=8460
-#    ports:
-#      - "8460:8460"
-#    depends_on:
-#      - dictionary_first
-#      - dictionary_second
-#      - consul
-#
-#  haproxy:
-#    image: haproxy:latest
-#    container_name: haproxy
-#    ports:
-#      - "8443:8443"
-#    volumes:
-#      - ./haproxy-second.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
-#      - ./baeldung.pem:/usr/local/etc/haproxy/certs/baeldung.pem:ro
-#    depends_on:
-#      - dictionary_first
-#      - dictionary_second
-#      - second_payara_1
-#      - second_payara_2
+  second_payara_1:
+    build:
+      context: ./second_ejb
+      dockerfile: Dockerfile
+    container_name: second_payara_1
+    environment:
+      - APP_PORT=8459
+    ports:
+      - "8459:8459"
+    depends_on:
+      - dictionary_first
+    networks:
+      - mynet
+
+  second_payara_2:
+    build:
+      context: ./second_ejb
+      dockerfile: Dockerfile
+    container_name: second_payara_2
+    environment:
+      - APP_PORT=8460
+    ports:
+      - "8460:8460"
+    depends_on:
+      - dictionary_first
+    networks:
+      - mynet
+
+  react-app:
+    build: ../frontend
+    ports:
+      - "1337:1337"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    command: npm run dev
+    stdin_open: true
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    networks:
+      - mynet
+
+  haproxy:
+    image: haproxy:latest
+    container_name: haproxy
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./haproxy-second.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - ./baeldung.pem:/usr/local/etc/haproxy/certs/baeldung.pem:ro
+    depends_on:
+      - react-app
+      - dictionary_first
+      - second_payara_1
+      - second_payara_2
+    networks:
+      - mynet
+
+networks:
+  mynet:
+    driver: bridge

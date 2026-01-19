@@ -5,6 +5,7 @@ import jakarta.jws.WebMethod;
 import jakarta.jws.WebParam;
 import jakarta.jws.WebService;
 import ru.ifmo.first_wildfly.dto.*;
+import ru.ifmo.first_wildfly.exception.FirstException;
 import ru.ifmo.first_wildfly.service.VehicleService;
 
 import java.util.List;
@@ -54,7 +55,7 @@ public class VehicleApiImpl {
     @WebMethod
     public VehicleDto getVehicleById(@WebParam(name = "id") Integer id) {
         return vehicleService.getById(id)
-                .orElseThrow(() -> new RuntimeException("Vehicle not found"));
+                .orElseThrow(() -> new FirstException("Vehicle not found", 404));
     }
 
     @WebMethod

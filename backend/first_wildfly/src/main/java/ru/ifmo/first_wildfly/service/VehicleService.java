@@ -29,7 +29,6 @@ public class VehicleService {
     @PersistenceContext
     private EntityManager entityManager;
 
-    // --- CREATE ---
     @Transactional
     public VehicleDto createVehicle(VehicleCreateDto dto) {
         var entity = toEntity(dto);
@@ -37,27 +36,23 @@ public class VehicleService {
         return toDto(entity);
     }
 
-    // --- READ by ID ---
     public Optional<VehicleDto> getById(Integer id) {
         VehicleEntity entity = entityManager.find(VehicleEntity.class, id);
         return entity != null ? Optional.of(toDto(entity)) : Optional.empty();
     }
 
-    // --- DELETE ---
     @Transactional
     public void delete(Integer id) {
         VehicleEntity entity = entityManager.find(VehicleEntity.class, id);
         if (entity == null) {
-            throw new FirstException("Vehicle wasn't found");
+            throw new FirstException("Vehicle wasn't found", 404);
         }
         entityManager.remove(entity);
     }
 
-    // --- GET LIST with filtering, sorting, pagination ---
     public PagedVehicleResponseDto getVehicles(VehicleSearchCriteria criteria, VehiclePage pageParams) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
 
-        // Count total
         CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
         Root<VehicleEntity> countRoot = countQuery.from(VehicleEntity.class);
         countQuery.select(cb.count(countRoot));
@@ -68,12 +63,10 @@ public class VehicleService {
             return emptyPagedResponse(pageParams.getPage(), total.intValue());
         }
 
-        // Main query
         CriteriaQuery<VehicleEntity> query = cb.createQuery(VehicleEntity.class);
         Root<VehicleEntity> root = query.from(VehicleEntity.class);
         applyFilters(root, query, cb, criteria);
 
-        // Sorting
         String sortField = pageParams.getSort();
         if (sortField == null || !isValidSortField(sortField)) {
             sortField = "id";
@@ -85,7 +78,6 @@ public class VehicleService {
 
         TypedQuery<VehicleEntity> typedQuery = entityManager.createQuery(query);
 
-        // Pagination
         int page = pageParams.getPage() != null ? pageParams.getPage() : 1;
         int size = pageParams.getSize() != null ? pageParams.getSize() : 20;
         if (page < 1) page = 1;
@@ -100,12 +92,11 @@ public class VehicleService {
         return buildPagedResponse(content, total.intValue(), page, size);
     }
 
-    // --- UPDATE ---
     @Transactional
     public VehicleDto update(Integer id, VehicleUpdateDto dto) {
         VehicleEntity entity = entityManager.find(VehicleEntity.class, id);
         if (entity == null) {
-            throw new FirstException("Vehicle wasn't found");
+            throw new FirstException("Vehicle wasn't found", 404);
         }
 
         if (nonNull(dto.getName())) entity.setName(dto.getName());
@@ -120,30 +111,26 @@ public class VehicleService {
             if (nonNull(dto.getCoordinates().getY())) coords.setY(dto.getCoordinates().getY());
         }
 
-        // No need to call persist/merge — entity is managed
         return toDto(entity);
     }
 
-    // --- SEARCH by prefix ---
     public List<VehicleDto> vehiclesSearchNameStartsWithPrefix(String prefix) {
-        String jpql = "SELECT v FROM VehicleEntity v WHERE LOWER(v.name) LIKE :prefix";
+        String jpql = "SELECT v FROM VehicleEntity v WHERE v.name LIKE :prefix";
         TypedQuery<VehicleEntity> query = entityManager.createQuery(jpql, VehicleEntity.class);
-        query.setParameter("prefix", prefix.toLowerCase() + "%");
+        query.setParameter("prefix", "%" + prefix + "%");
         return query.getResultList().stream().map(this::toDto).collect(Collectors.toList());
     }
 
-    // --- STAT: average engine power ---
     public AverageEnginePowerResponseDto countAverageEnginePowerGet() {
         Double avg = entityManager.createQuery(
                         "SELECT AVG(v.enginePower) FROM VehicleEntity v", Double.class)
                 .getSingleResult();
         if (isNull(avg)) {
-            throw new FirstException("No vehicles in collection");
+            return new AverageEnginePowerResponseDto(0F);
         }
         return new AverageEnginePowerResponseDto(avg.floatValue());
     }
 
-    // --- STAT: count by wheels ---
     public CountByWheelsResponseDto getCountByWheelsWheels(Integer wheels) {
         Long count = entityManager.createQuery(
                         "SELECT COUNT(v) FROM VehicleEntity v WHERE v.numberOfWheels = :wheels", Long.class)
@@ -152,13 +139,14 @@ public class VehicleService {
         return new CountByWheelsResponseDto(count.intValue());
     }
 
-    // --- HELPERS ---
-
     private void applyFilters(Root<VehicleEntity> root, CriteriaQuery<?> query, CriteriaBuilder cb, VehicleSearchCriteria c) {
         Predicate predicate = cb.conjunction();
 
         if (c.getName() != null && !c.getName().isEmpty()) {
-            predicate = cb.and(predicate, cb.equal(root.get("name"), c.getName()));
+            String searchPattern = "%" + c.getName().toLowerCase() + "%";
+            predicate = cb.and(predicate,
+                    cb.like(cb.lower(root.get("name")), searchPattern)
+            );
         }
 
         if (c.getMinEnginePower() != null) {
@@ -187,8 +175,7 @@ public class VehicleService {
                 FuelType fuel = FuelType.valueOf(c.getFuelType());
                 predicate = cb.and(predicate, cb.equal(root.get("fuelType"), fuel));
             } catch (IllegalArgumentException ignored) {
-                // invalid fuel → no match
-                predicate = cb.and(predicate, cb.disjunction()); // always false
+                predicate = cb.and(predicate, cb.disjunction());
             }
         }
 
@@ -217,8 +204,6 @@ public class VehicleService {
                 requestedPage
         );
     }
-
-    // --- MAPPING ---
 
     private VehicleDto toDto(VehicleEntity e) {
         return new VehicleDto(

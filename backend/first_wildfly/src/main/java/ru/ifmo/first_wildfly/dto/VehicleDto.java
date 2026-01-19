@@ -4,13 +4,9 @@ import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlSchemaType;
-import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-import java.io.Serializable;
-import java.time.OffsetDateTime;
 
-// ⚠️ OffsetDateTime требует XmlAdapter для надёжной работы
-// Если не хотите писать адаптер — замените на String
+import java.io.Serializable;
+
 @XmlRootElement(name = "vehicle")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class VehicleDto implements Serializable {
@@ -27,7 +23,6 @@ public class VehicleDto implements Serializable {
     private CoordinatesDto coordinates;
 
     @XmlElement
-    // @XmlJavaTypeAdapter(OffsetDateTimeAdapter.class) // ← раскомментируйте, если напишете адаптер
     private String creationDate;
 
     @XmlElement
@@ -57,7 +52,6 @@ public class VehicleDto implements Serializable {
         this.fuelType = fuelType;
     }
 
-    // Getters & Setters
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 
