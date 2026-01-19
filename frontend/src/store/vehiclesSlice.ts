@@ -3,7 +3,7 @@ import {vehiclesApi} from '../api/vehiclesApi';
 import type {Vehicle, VehicleCreate, VehicleUpdate, VehicleFilters} from '../api/types';
 
 interface VehiclesState {
-    vehicles: Vehicle[];
+    vehicles: Array<{ vehicle: Vehicle }>;
     currentVehicle: Vehicle | null;
     loading: boolean;
     error: string | null;

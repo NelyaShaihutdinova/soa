@@ -232,11 +232,12 @@ const VehicleList: React.FC<VehicleListProps> = ({onEdit, onView}) => {
         };
         return colors[fuelType] || 'default';
     };
+    const tableData = vehicles.map(item => item.vehicle);
 
     return (
         <Table
             columns={columns}
-            dataSource={vehicles}
+            dataSource={tableData}
             rowKey="id"
             loading={loading}
             pagination={{
