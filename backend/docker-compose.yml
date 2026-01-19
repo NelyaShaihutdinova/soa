@@ -67,6 +67,8 @@ services:
       - second_payara_2
     networks:
       - mynet
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 networks:
   mynet:
