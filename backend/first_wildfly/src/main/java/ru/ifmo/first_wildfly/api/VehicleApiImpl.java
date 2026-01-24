@@ -1,116 +1,92 @@
 package ru.ifmo.first_wildfly.api;
 
-import jakarta.validation.constraints.NotNull;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.request.NativeWebRequest;
-import org.springframework.web.server.ResponseStatusException;
-import ru.ifmo.first_wildfly.domain.VehiclePage;
-import ru.ifmo.first_wildfly.domain.VehicleSearchCriteria;
+import jakarta.ejb.EJB;
+import jakarta.jws.WebMethod;
+import jakarta.jws.WebParam;
+import jakarta.jws.WebService;
+import ru.ifmo.first_wildfly.dto.*;
 import ru.ifmo.first_wildfly.exception.FirstException;
-import ru.ifmo.first_wildfly.model.*;
 import ru.ifmo.first_wildfly.service.VehicleService;
 
-import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 
-import static org.springframework.http.ResponseEntity.ok;
-import static org.springframework.http.ResponseEntity.status;
+@WebService(
+        serviceName = "VehicleAPI"
+)
+public class VehicleApiImpl {
 
-@RestController
-@RequiredArgsConstructor
-public class VehicleApiImpl implements VehiclesApi {
+    @EJB
+    private VehicleService vehicleService;
 
-    private final VehicleService vehicleService;
+    @WebMethod
+    public PagedVehicleResponseDto getVehicles(
+            @WebParam(name = "page") Integer page,
+            @WebParam(name = "size") Integer size,
+            @WebParam(name = "sort") String sort,
+            @WebParam(name = "order") String order,
+            @WebParam(name = "name") String name,
+            @WebParam(name = "minEnginePower") Integer minEnginePower,
+            @WebParam(name = "maxEnginePower") Integer maxEnginePower,
+            @WebParam(name = "minWheels") Integer minWheels,
+            @WebParam(name = "maxWheels") Integer maxWheels,
+            @WebParam(name = "minCapacity") Float minCapacity,
+            @WebParam(name = "maxCapacity") Float maxCapacity,
+            @WebParam(name = "fuelType") String fuelType) {
 
-    @Override
-    public Optional<NativeWebRequest> getRequest() {
-        return VehiclesApi.super.getRequest();
-    }
-
-    @Override
-    public ResponseEntity<VehiclesGet200Response> vehiclesGet(Integer page,
-                                                              Integer size,
-                                                              String sort,
-                                                              String order,
-                                                              String name,
-                                                              Integer minEnginePower,
-                                                              Integer maxEnginePower,
-                                                              Integer minWheels,
-                                                              Integer maxWheels,
-                                                              BigDecimal minCapacity,
-                                                              BigDecimal maxCapacity,
-                                                              String fuelType) {
-        validateRangeParams(minEnginePower, maxEnginePower);
-        validateRangeParams(minWheels, maxWheels);
-        validateRangeParams(minCapacity, maxCapacity);
-
-        var criteria = new VehicleSearchCriteria();
+        var criteria = new ru.ifmo.first_wildfly.domain.VehicleSearchCriteria();
         criteria.setName(name);
         criteria.setMinEnginePower(minEnginePower);
         criteria.setMaxEnginePower(maxEnginePower);
         criteria.setMinWheels(minWheels);
         criteria.setMaxWheels(maxWheels);
-        criteria.setMinCapacity(minCapacity);
-        criteria.setMaxCapacity(maxCapacity);
+        criteria.setMinCapacity(minCapacity != null ? java.math.BigDecimal.valueOf(minCapacity) : null);
+        criteria.setMaxCapacity(maxCapacity != null ? java.math.BigDecimal.valueOf(maxCapacity) : null);
         criteria.setFuelType(fuelType);
 
-        VehiclePage vehiclePage = new VehiclePage();
-        vehiclePage.setPage(page);
-        vehiclePage.setSize(size);
-        vehiclePage.setSort(sort);
-        vehiclePage.setOrder(order);
+        var pageParams = new ru.ifmo.first_wildfly.domain.VehiclePage();
+        pageParams.setPage(page);
+        pageParams.setSize(size);
+        pageParams.setSort(sort);
+        pageParams.setOrder(order);
 
-        var result = vehicleService.getVehicles(criteria, vehiclePage);
-        return ResponseEntity.ok(result);
+        return vehicleService.getVehicles(criteria, pageParams);
     }
 
-    private void validateRangeParams(Comparable min, Comparable max) {
-        if (min != null && max != null && min.compareTo(max) > 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unbound filter parameters");
-        }
-    }
-
-    @Override
-    public ResponseEntity<Void> vehiclesIdDelete(Integer id) {
-        vehicleService.delete(id);
-        return status(204).build();
-    }
-
-    @Override
-    public ResponseEntity<Vehicle> vehiclesIdGet(Integer id) {
+    @WebMethod
+    public VehicleDto getVehicleById(@WebParam(name = "id") Integer id) {
         return vehicleService.getById(id)
-                .map(ResponseEntity::ok)
-                .orElseThrow(() -> new FirstException(HttpStatus.NOT_FOUND, "Vehicle wasn't found"));
+                .orElseThrow(() -> new FirstException("Vehicle not found", 404));
     }
 
-    @Override
-    public ResponseEntity<Vehicle> vehiclesIdPost(Integer id, VehicleUpdate vehicleUpdate) {
-        return ok(vehicleService.update(id, vehicleUpdate));
+    @WebMethod
+    public VehicleDto createVehicle(@WebParam(name = "vehicle") VehicleCreateDto vehicle) {
+        return vehicleService.createVehicle(vehicle);
     }
 
-    @Override
-    public ResponseEntity<Vehicle> vehiclesPost(VehicleCreate vehicleCreate) {
-        return status(HttpStatusCode.valueOf(201))
-                .body(vehicleService.createVehicle(vehicleCreate));
+    @WebMethod
+    public VehicleDto updateVehicle(
+            @WebParam(name = "id") Integer id,
+            @WebParam(name = "vehicle") VehicleUpdateDto vehicle) {
+        return vehicleService.update(id, vehicle);
     }
 
-    @Override
-    public ResponseEntity<List<Vehicle>> vehiclesSearchNameStartsWithPrefixGet(String prefix) {
-        return ok(vehicleService.vehiclesSearchNameStartsWithPrefix(prefix));
+    @WebMethod
+    public void deleteVehicle(@WebParam(name = "id") Integer id) {
+        vehicleService.delete(id);
     }
 
-    @Override
-    public ResponseEntity<VehiclesStatsAverageEnginePowerGet200Response> vehiclesStatsAverageEnginePowerGet() {
-        return ok(vehicleService.countAverageEnginePowerGet());
+    @WebMethod
+    public List<VehicleDto> searchByNamePrefix(@WebParam(name = "prefix") String prefix) {
+        return vehicleService.vehiclesSearchNameStartsWithPrefix(prefix);
     }
 
-    @Override
-    public ResponseEntity<VehiclesStatsCountByWheelsWheelsGet200Response> vehiclesStatsCountByWheelsWheelsGet(Integer wheels) {
-        return ok(vehicleService.getCountByWheelsWheels(wheels));
+    @WebMethod
+    public AverageEnginePowerResponseDto getAverageEnginePower() {
+        return vehicleService.countAverageEnginePowerGet();
+    }
+
+    @WebMethod
+    public CountByWheelsResponseDto getCountByWheels(@WebParam(name = "wheels") Integer wheels) {
+        return vehicleService.getCountByWheelsWheels(wheels);
     }
 }
