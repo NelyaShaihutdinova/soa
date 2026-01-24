@@ -3,7 +3,7 @@ import {vehiclesApi} from '../api/vehiclesApi';
 import type {Vehicle, VehicleCreate, VehicleUpdate, VehicleFilters} from '../api/types';
 
 interface VehiclesState {
-    vehicles: Vehicle[];
+    vehicles: Vehicle[]; 
     currentVehicle: Vehicle | null;
     loading: boolean;
     error: string | null;
@@ -86,11 +86,54 @@ const vehiclesSlice = createSlice({
             })
             .addCase(fetchVehicles.fulfilled, (state, action) => {
                 state.loading = false;
-                state.vehicles = action.payload.content;
+                
+                let vehiclesArray: Vehicle[] = [];
+                
+                if (Array.isArray(action.payload)) {
+                    const firstItem = action.payload[0];
+                    if (firstItem && 'vehicle' in firstItem) {
+                        const allVehicles: Vehicle[] = [];
+                        const processedKeys = new Set();
+                        const extractVehicles = (obj: any) => {
+                            for (const key in obj) {
+                                if (processedKeys.has(key)) continue;
+                                
+                                if (key === 'vehicle' && obj[key] && typeof obj[key] === 'object') {
+                                    allVehicles.push(obj[key]);
+                                    processedKeys.add(key);
+                                } else if (obj[key] && typeof obj[key] === 'object') {
+                                    extractVehicles(obj[key]);
+                                }
+                            }
+                        };
+                        
+                        extractVehicles(firstItem);
+                        vehiclesArray = allVehicles;
+                    } else {
+                        vehiclesArray = action.payload;
+                    }
+                } else if (action.payload.content && Array.isArray(action.payload.content)) {
+                    vehiclesArray = action.payload.content.map((item: any) => 
+                        item.vehicle || item
+                    );
+                }
+                
+                state.vehicles = vehiclesArray.map(vehicle => ({
+                    ...vehicle,
+                    id: Number(vehicle.id),
+                    enginePower: vehicle.enginePower ? Number(vehicle.enginePower) : undefined,
+                    numberOfWheels: vehicle.numberOfWheels ? Number(vehicle.numberOfWheels) : undefined,
+                    capacity: Number(vehicle.capacity),
+                    coordinates: {
+                        x: Number(vehicle.coordinates?.x),
+                        y: Number(vehicle.coordinates?.y),
+                    }
+                }));
+                
                 state.pagination = {
-                    currentPage: action.payload.currentPage,
-                    totalPages: action.payload.totalPages,
-                    totalElements: action.payload.totalElements,
+                    currentPage: Number(action.payload.currentPage) || 1,
+                    totalPages: Number(action.payload.totalPages) || 1,
+                    totalElements: Number(action.payload.totalElements) || vehiclesArray.length,
                     pageSize: state.pagination.pageSize,
                 };
             })
@@ -99,18 +142,51 @@ const vehiclesSlice = createSlice({
                 state.error = action.error.message || 'Failed to fetch vehicles';
             })
             .addCase(fetchVehicleById.fulfilled, (state, action) => {
-                state.currentVehicle = action.payload;
+                state.currentVehicle = {
+                    ...action.payload,
+                    id: Number(action.payload.id),
+                    enginePower: action.payload.enginePower ? Number(action.payload.enginePower) : undefined,
+                    numberOfWheels: action.payload.numberOfWheels ? Number(action.payload.numberOfWheels) : undefined,
+                    capacity: Number(action.payload.capacity),
+                    coordinates: {
+                        x: Number(action.payload.coordinates?.x),
+                        y: Number(action.payload.coordinates?.y),
+                    }
+                };
             })
             .addCase(createVehicle.fulfilled, (state, action) => {
-                state.vehicles.push(action.payload);
+                const newVehicle = {
+                    ...action.payload,
+                    id: Number(action.payload.id),
+                    enginePower: action.payload.enginePower ? Number(action.payload.enginePower) : undefined,
+                    numberOfWheels: action.payload.numberOfWheels ? Number(action.payload.numberOfWheels) : undefined,
+                    capacity: Number(action.payload.capacity),
+                    coordinates: {
+                        x: Number(action.payload.coordinates?.x),
+                        y: Number(action.payload.coordinates?.y),
+                    }
+                };
+                state.vehicles.unshift(newVehicle);
             })
             .addCase(updateVehicle.fulfilled, (state, action) => {
-                const index = state.vehicles.findIndex(v => v.id === action.payload.id);
+                const updatedVehicle = {
+                    ...action.payload,
+                    id: Number(action.payload.id),
+                    enginePower: action.payload.enginePower ? Number(action.payload.enginePower) : undefined,
+                    numberOfWheels: action.payload.numberOfWheels ? Number(action.payload.numberOfWheels) : undefined,
+                    capacity: Number(action.payload.capacity),
+                    coordinates: {
+                        x: Number(action.payload.coordinates?.x),
+                        y: Number(action.payload.coordinates?.y),
+                    }
+                };
+                
+                const index = state.vehicles.findIndex(v => v.id === updatedVehicle.id);
                 if (index !== -1) {
-                    state.vehicles[index] = action.payload;
+                    state.vehicles[index] = updatedVehicle;
                 }
-                if (state.currentVehicle?.id === action.payload.id) {
-                    state.currentVehicle = action.payload;
+                if (state.currentVehicle?.id === updatedVehicle.id) {
+                    state.currentVehicle = updatedVehicle;
                 }
             })
             .addCase(deleteVehicle.fulfilled, (state, action) => {

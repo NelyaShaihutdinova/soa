@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type {Vehicle, VehicleCreate, VehicleUpdate, PaginatedResponse, VehicleFilters} from './types.ts';
 
-const API_BASE_URL_SERVICE_1 = '/app';
+const API_BASE_URL_SERVICE_1 = '/api';
 const API_BASE_URL_SERVICE_2 = '';
 
 const api1 = axios.create({
@@ -48,11 +48,11 @@ const vehiclesApi = {
     },
 
     getAverageEnginePower: () => {
-        return api1.get<{ averageEnginePower: number }>(`${API_BASE_URL_SERVICE_1}/vehicles/stats/average-engine-power`);
+        return api1.get<{ averageEnginePower: number }>(`${API_BASE_URL_SERVICE_1}/stats/average-engine-power`);
     },
 
     getCountByWheels: (wheels: number) => {
-        return api1.get<{ count: number }>(`${API_BASE_URL_SERVICE_1}/vehicles/stats/count-by-wheels/${wheels}`);
+        return api1.get<{ count: number }>(`${API_BASE_URL_SERVICE_1}/stats/count-by-wheels/${wheels}`);
     },
 };
 

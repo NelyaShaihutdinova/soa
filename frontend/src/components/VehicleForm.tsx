@@ -95,7 +95,11 @@ const VehicleForm: React.FC<VehicleFormProps> = ({initialValues, onSubmit, onCan
 
             <Row gutter={16}>
                 <Col span={12}>
-                    <Form.Item name="enginePower" label="Engine Power">
+                    <Form.Item
+                        name="enginePower"
+                        label="Engine Power"
+                        rules={[{required: true, message: 'Please enter engine power'}]}
+                    >
                         <InputNumber
                             placeholder="Engine power"
                             min={1}
@@ -104,7 +108,11 @@ const VehicleForm: React.FC<VehicleFormProps> = ({initialValues, onSubmit, onCan
                     </Form.Item>
                 </Col>
                 <Col span={12}>
-                    <Form.Item name="numberOfWheels" label="Number of Wheels">
+                    <Form.Item
+                        name="numberOfWheels"
+                        label="Number of Wheels"
+                        rules={[{required: true, message: 'Please enter number of wheels'}]}
+                    >
                         <InputNumber
                             placeholder="Number of wheels"
                             min={1}

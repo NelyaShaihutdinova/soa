@@ -107,7 +107,7 @@ const App: React.FC = () => {
             <Header>
                 <Space>
                     <Title level={3} style={{color: 'white', margin: 0}}>
-                        SOA / LaboratoryWork2
+                        SOA / Course work
                     </Title>
                 </Space>
             </Header>
